@@ -1,0 +1,153 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+
+struct TileData {
+    id: int,
+    player_icon: image,
+    computer_icon: image,
+    player_clicked: bool,
+    computer_clicked: bool
+}
+component TicTacToeTile inherits Rectangle {
+    in property <int> id;
+    in property <image> player_icon;
+    in property <image> computer_icon;
+    in-out property <bool> player_clicked;
+    in-out property <bool> computer_clicked;
+    callback player_selected(int);
+
+    Rectangle {
+        background: yellow;
+        Image {
+            visible: root.player_clicked;
+            source: root.player_icon;
+            width: parent.width - 16px;
+            height: parent.height - 16px;
+            x: parent.x;
+            y: parent.y;
+        }
+        Image {
+            visible: root.computer_clicked;
+            source: root.computer_icon;
+            width: parent.width - 16px;
+            height: parent.height - 16px;
+            x: parent.x;
+            y: parent.y;
+        }
+        TouchArea {
+            clicked => {
+                root.player_selected(id);
+            }
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    private property <length> tile-size: 100px;
+    private property <length> tile-spacing: 10px;
+    private property <int> row-count: 3;
+    private property <int> column-count: 3;
+    in-out property <bool> player_clicked;
+    in-out property <bool> computer_clicked;
+    callback computer_turn(int);
+
+    // "column_count + 1" and "row_count + 1" are the number of gaps between the tiles.
+    width: (root.column-count * root.tile-size) + ((root.column-count + 1) * root.tile-spacing);
+    height: (root.row-count * root.tile-size) + ((root.row-count + 1) * root.tile-spacing);
+    title: "Tic-Tac-Toe Game";
+
+    in property <[TileData]> ttt_tiles : [
+        {
+            id: 1,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false
+        },
+        { 
+            id: 2,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            user_clicked: false,
+            computer_clicked: false    
+        },
+        {
+            id: 3,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false    
+        },
+        {
+            id: 4,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false    
+        },
+        {
+            id: 5,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false    
+        },
+        { 
+            id: 6,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false    
+        },
+        { 
+            id: 7,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false    
+        },
+        { 
+            id: 8,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false    
+        },
+        {
+            id: 9,
+            player_icon: @image-url("icons/x.png"),
+            computer_icon: @image-url("icons/o.png"),
+            player_clicked: false,
+            computer_clicked: false
+        }
+    ];
+
+    for tile[i] in ttt_tiles : TicTacToeTile {
+        player_selected(id) => {
+            if (id < 4) {
+                player_clicked = true;
+                computer_turn(id);
+            }
+            if (id > 3 && id < 7) {
+                player_clicked = true;
+                computer_turn(id);
+            }             
+            if (id > 6 && id < 10) {
+                player_clicked = true;
+                computer_turn(id);
+            }
+        }
+        id: i + 1;
+        x: root.tile-spacing + mod(i, root.column-count) * (root.tile-size + root.tile-spacing);
+        y: root.tile-spacing + floor(i / root.row-count) * (root.tile-size + root.tile-spacing);
+        width: root.tile-size;
+        height: root.tile-size;
+        player_icon: tile.player-icon;
+        computer_icon: tile.computer-icon;
+        //player_clicked: true;
+    }
+
+}
+
+
