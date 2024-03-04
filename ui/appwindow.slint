@@ -2,6 +2,7 @@ import { Button, VerticalBox } from "std-widgets.slint";
 
 struct TileData {
     id: int,
+    win_color: brush,
     player_clicked: bool,
     computer_clicked: bool,
     empty: bool
@@ -13,10 +14,12 @@ component TicTacToeTile inherits Rectangle {
     in-out property <bool> player_clicked;
     in-out property <bool> computer_clicked;
     in-out property <bool> empty;
+    in-out property <brush> win_color;
+
     callback player_selected(int);
 
     Rectangle {
-        background: yellow;
+        background: root.win_color;
         Image {
             visible: root.player_clicked;
             source: root.player_icon;
@@ -51,69 +54,72 @@ export component AppWindow inherits Window {
     private property <image> player_icon: @image-url("icons/x.png");
     private property <image> computer_icon: @image-url("icons/o.png");
 
-    // in-out property <int> id;
-    // in-out property <bool> player_clicked;
-    // in-out property <bool> computer_clicked;
-    // in-out property <bool> empty;
-
     callback computer_turn(int);
 
-    // "column_count + 1" and "row_count + 1" are the number of gaps between the tiles.
     width: (root.column-count * root.tile-size) + ((root.column-count + 1) * root.tile-spacing);
     height: (root.row-count * root.tile-size) + ((root.row-count + 1) * root.tile-spacing);
     title: "Tic-Tac-Toe Game";
 
-    in property <[TileData]> ttt_tiles : [
+    in-out property <[TileData]> ttt_tiles : [
         {
             id: 0,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
         },
-        { 
+        {
             id: 1,
+            win_color: Colors.yellow,
             user_clicked: false,
             computer_clicked: false,
             empty: true
         },
         {
             id: 2,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
         },
         {
             id: 3,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
         },
         {
             id: 4,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true    
         },
-        { 
+        {
             id: 5,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
         },
         { 
             id: 6,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
         },
-        { 
+        {
             id: 7,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
         },
         {
             id: 8,
+            win_color: Colors.yellow,
             player_clicked: false,
             computer_clicked: false,
             empty: true
@@ -135,6 +141,7 @@ export component AppWindow inherits Window {
         player_clicked: tile.player-clicked;
         computer_clicked: tile.computer_clicked;
         empty: tile.empty;
+        win_color: tile.win-color;
     }
 
 }
