@@ -16,7 +16,7 @@ component TicTacToeTile inherits Rectangle {
     in-out property <bool> empty;
     in-out property <brush> win_color;
 
-    callback player_selected(int);
+    callback human_selected(int);
 
     Rectangle {
         background: root.win_color;
@@ -38,7 +38,7 @@ component TicTacToeTile inherits Rectangle {
         }
         TouchArea {
             clicked => {
-                root.player_selected(id);
+                root.human_selected(id);
             }
             width: 100%;
             height: 100%;
@@ -54,7 +54,7 @@ export component AppWindow inherits Window {
     private property <image> player_icon: @image-url("icons/x.png");
     private property <image> computer_icon: @image-url("icons/o.png");
 
-    callback computer_turn(int);
+    callback process(int);
 
     width: (root.column-count * root.tile-size) + ((root.column-count + 1) * root.tile-spacing);
     height: (root.row-count * root.tile-size) + ((root.row-count + 1) * root.tile-spacing);
@@ -90,11 +90,12 @@ export component AppWindow inherits Window {
             empty: true
         },
         {
+            // Machine start
             id: 4,
             win_color: Colors.yellow,
             player_clicked: false,
-            computer_clicked: false,
-            empty: true    
+            computer_clicked: true,
+            empty: false
         },
         {
             id: 5,
@@ -127,8 +128,8 @@ export component AppWindow inherits Window {
     ];
 
     for tile[i] in ttt_tiles : TicTacToeTile {
-        player_selected(id) => {
-            computer_turn(id);
+        human_selected(id) => {
+            process(id);
         }
         id: i;
         x: root.tile-spacing + mod(i, root.column-count) * (root.tile-size + root.tile-spacing);
