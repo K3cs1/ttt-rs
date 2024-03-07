@@ -1,7 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
-
 use log::info;
 use slint::{Brush, Color, Model, VecModel, Weak};
+use std::collections::LinkedList;
+use std::{cell::RefCell, rc::Rc};
 
 const PLAYER_WIN_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(0, 140, 0));
 const COMPUTER_WIN_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(140, 0, 0));
@@ -12,12 +12,14 @@ slint::slint! {
     import { AppWindow } from "ui/appwindow.slint";
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Player {
     Machine,
     Human,
     Nobody,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct Tile {
     field_id: i32,
     player: Player,
@@ -121,11 +123,81 @@ fn init_win_tree() -> WinTree<Vec<Tile>> {
     win_tree
 }
 
-fn has_machine_win(tiles_model: Rc<VecModel<TileData>>) -> bool {
-    todo!()
+fn machine_next_step(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> {
+    let mut queue: LinkedList<WinTree<Vec<Tile>>> = LinkedList::new();
+
+    let actual_state: WinTree<Vec<Tile>> = build_state_from_model(tiles_model);
+
+    let the_win_tree: WinTree<Vec<Tile>> = init_win_tree();
+
+    let mut current_node: WinTree<Vec<Tile>>;
+
+    let mut result: WinTree<Vec<Tile>>;
+
+    let mut visited: Vec<bool> = vec![];
+
+    loop {
+        if !queue.is_empty() {
+            current_node = queue.pop_front().unwrap();
+            let current_values: Vec<Tile> = current_node.value;
+            let the_win_tree_values = the_win_tree.value;
+
+            for tree_val in the_win_tree_values {
+                if actual_state.value.contains(&tree_val) {
+                    return current_node;
+                } else {
+                    if current_node.left.is_some() {
+                        queue.push_back(*current_node.left.unwrap())
+                    }
+                    
+                }
+            }
+
+            // for tile_step in current_value {
+            //     if let Some((tile_idx, mut tile)) = all_tiles.next() {
+            //         let title_field_id = usize::try_from(tile_step.field_id).unwrap();
+            //         if (tile_step.field_id == 2 && title_field_id == tile_idx)
+            //             || (tile_step.field_id == 4 && title_field_id == tile_idx)
+            //             || (tile_step.field_id == 6 && title_field_id == tile_idx)
+            //         {
+            //             match tile_step.player {
+            //                 Player::Machine => {
+            //                     if tile.computer_clicked == true {
+            //                         machine_win_combo.push(tile_step.field_id);
+            //                     }
+            //                 }
+            //                 _ => {}
+            //             }
+            //         }
+            //     };
+
+            // }
+            // if machine_win_combo.contains(&2)
+            //     && machine_win_combo.contains(&4)
+            //     && machine_win_combo.contains(&6)
+            // {
+            //     //result = machine_win_combo;
+            // }
+        }
+    }
 }
 
-fn has_human_win(tiles_model: Rc<VecModel<TileData>>) -> bool {
+fn build_state_from_model(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> {
+    let mut all_tiles = tiles_model.iter().enumerate();
+
+    let mut states: Vec<Tile> = vec![];
+    if let Some((tile_idx, mut tile_data)) = all_tiles.next() {
+        //let title_field_id = usize::try_from(tile_data.id).unwrap();
+        if tile_data.player_clicked == true {
+            states.push(Tile::new(tile_data.id, Player::Human));
+        } else {
+            states.push(Tile::new(tile_data.id, Player::Machine));
+        }
+    }
+    WinTree::new(states)
+}
+
+fn has_human_win_combo(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> {
     todo!()
 }
 
@@ -151,9 +223,9 @@ fn main() {
 
         //let ui: AppWindow = ui_weak.unwrap();
 
-        has_human_win(tiles_model.clone());
-        
-        has_machine_win(tiles_model.clone());
+        let human_win_combo = has_human_win_combo(tiles_model.clone());
+
+        let machine_win_combo = has_machine_win_combo(tiles_model.clone());
 
         let mut empty_tiles = tiles_model
             .iter()
@@ -189,7 +261,7 @@ fn main() {
                 //tile_data.win_color = COMPUTER_WIN_COLOR;
                 tiles_model.set_row_data(_i, tile_data);
             }
-        });        
+        });
     });
 
     ui.run().unwrap();
