@@ -1,5 +1,6 @@
 use log::info;
 use slint::{Brush, Color, Model, VecModel, Weak};
+use std::collections::HashSet;
 use std::collections::LinkedList;
 use std::{cell::RefCell, rc::Rc};
 
@@ -39,57 +40,94 @@ impl Tile {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WinTree<T> {
+pub struct WinGraph<T> {
     value: T,
-    left: Option<Box<WinTree<T>>>,
-    right: Option<Box<WinTree<T>>>,
+    //left: Option<Box<WinGraph<T>>>,
+    //right: Option<Box<WinGraph<T>>>,
+    children: Vec<WinGraph<T>>,
 }
 
-impl<T> WinTree<T> {
+impl<T> WinGraph<T> {
     pub fn new(value: T) -> Self {
-        WinTree {
+        WinGraph {
             value,
-            left: None,
-            right: None,
+            //left: None,
+            //right: None,
+            children: Vec::new(),
         }
     }
-    pub fn left(mut self, node: WinTree<T>) -> Self {
-        self.left = Some(Box::new(node));
-        self
+
+    pub fn get_children(&mut self) -> &mut Vec<WinGraph<T>> {
+        &mut self.children
     }
 
-    pub fn right(mut self, node: WinTree<T>) -> Self {
-        self.right = Some(Box::new(node));
-        self
+    pub fn add_child(&mut self, value: T) -> WinGraph<T> {
+        let mut new_child = WinGraph::new(value);
+        self.children.push(new_child);
+        new_child
+    }
+
+    // pub fn left(mut self, node: WinGraph<T>) -> Self {
+    //     self.left = Some(Box::new(node));
+    //     self
+    // }
+
+    // pub fn right(mut self, node: WinGraph<T>) -> Self {
+    //     self.right = Some(Box::new(node));
+    //     self
+    // }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Node<T> {
+    value: T,
+    neighbors: HashSet<Node<T>>,
+}
+
+impl<T> Node<T> {
+    pub fn new(value: T) -> Self {
+        Node {
+            value,
+            neighbors: HashSet::new(),
+        }
+    }
+
+    pub fn get_neighbors(&mut self) -> &mut HashSet<Node<T>> {
+        &mut self.neighbors
+    }
+
+    pub fn connect(&self, node: Node<T>) {
+        //if self == node {}
+        self.neighbors.insert(node);
     }
 }
 
-fn init_win_tree() -> WinTree<Vec<Tile>> {
-    let mut win_tree = WinTree::new(vec![Tile::init()])
-        .left(WinTree::new(vec![Tile::new(4, Player::Machine)]))
-        .left(WinTree::new(vec![
+fn init_win_tree() -> WinGraph<Vec<Tile>> {
+    let mut win_tree = WinGraph::new(vec![Tile::init()])
+        .left(WinGraph::new(vec![Tile::new(4, Player::Machine)]))
+        .left(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
         ]))
-        .left(WinTree::new(vec![
+        .left(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
         ]))
-        .right(WinTree::new(vec![
+        .right(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
             Tile::new(2, Player::Human),
         ]))
-        .right(WinTree::new(vec![
+        .right(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
             Tile::new(2, Player::Human),
             Tile::new(1, Player::Machine),
         ]))
-        .right(WinTree::new(vec![
+        .right(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
@@ -97,7 +135,7 @@ fn init_win_tree() -> WinTree<Vec<Tile>> {
             Tile::new(1, Player::Machine),
             Tile::new(8, Player::Human),
         ]))
-        .right(WinTree::new(vec![
+        .right(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
@@ -106,13 +144,13 @@ fn init_win_tree() -> WinTree<Vec<Tile>> {
             Tile::new(8, Player::Human),
             Tile::new(3, Player::Machine),
         ]))
-        .left(WinTree::new(vec![
+        .left(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
             Tile::new(0, Player::Human),
         ]))
-        .left(WinTree::new(vec![
+        .left(WinGraph::new(vec![
             Tile::new(4, Player::Machine),
             Tile::new(1, Player::Human),
             Tile::new(6, Player::Machine),
@@ -123,16 +161,16 @@ fn init_win_tree() -> WinTree<Vec<Tile>> {
     win_tree
 }
 
-fn machine_next_step(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> {
-    let mut queue: LinkedList<WinTree<Vec<Tile>>> = LinkedList::new();
+fn machine_next_step(tiles_model: Rc<VecModel<TileData>>) -> WinGraph<Vec<Tile>> {
+    let mut queue: LinkedList<WinGraph<Vec<Tile>>> = LinkedList::new();
 
-    let actual_state: WinTree<Vec<Tile>> = build_state_from_model(tiles_model);
+    let actual_state: WinGraph<Vec<Tile>> = build_state_from_model(tiles_model);
 
-    let the_win_tree: WinTree<Vec<Tile>> = init_win_tree();
+    let the_win_tree: WinGraph<Vec<Tile>> = init_win_tree();
 
-    let mut current_node: WinTree<Vec<Tile>>;
+    let mut current_node: WinGraph<Vec<Tile>>;
 
-    let mut result: WinTree<Vec<Tile>>;
+    let mut result: WinGraph<Vec<Tile>>;
 
     let mut visited: Vec<bool> = vec![];
 
@@ -149,7 +187,6 @@ fn machine_next_step(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> 
                     if current_node.left.is_some() {
                         queue.push_back(*current_node.left.unwrap())
                     }
-                    
                 }
             }
 
@@ -182,22 +219,22 @@ fn machine_next_step(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> 
     }
 }
 
-fn build_state_from_model(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> {
+fn build_state_from_model(tiles_model: Rc<VecModel<TileData>>) -> WinGraph<Vec<Tile>> {
     let mut all_tiles = tiles_model.iter().enumerate();
 
     let mut states: Vec<Tile> = vec![];
     if let Some((tile_idx, mut tile_data)) = all_tiles.next() {
         //let title_field_id = usize::try_from(tile_data.id).unwrap();
-        if tile_data.player_clicked == true {
+        if tile_data.human_clicked == true {
             states.push(Tile::new(tile_data.id, Player::Human));
         } else {
             states.push(Tile::new(tile_data.id, Player::Machine));
         }
     }
-    WinTree::new(states)
+    WinGraph::new(states)
 }
 
-fn has_human_win_combo(tiles_model: Rc<VecModel<TileData>>) -> WinTree<Vec<Tile>> {
+fn has_human_win_combo(tiles_model: Rc<VecModel<TileData>>) -> WinGraph<Vec<Tile>> {
     todo!()
 }
 
@@ -216,16 +253,14 @@ fn main() {
 
     ui.set_ttt_tiles(tiles_model.clone().into());
 
-    let win_tree: WinTree<Vec<Tile>> = init_win_tree();
-
     ui.on_process(move |id: i32| {
         info!("{}", id);
 
         //let ui: AppWindow = ui_weak.unwrap();
 
-        let human_win_combo = has_human_win_combo(tiles_model.clone());
+        //let human_win_combo = has_human_win_combo(tiles_model.clone());
 
-        let machine_win_combo = has_machine_win_combo(tiles_model.clone());
+        //let machine_win_combo = has_machine_win_combo(tiles_model.clone());
 
         let mut empty_tiles = tiles_model
             .iter()
@@ -235,7 +270,7 @@ fn main() {
         //Human turn
         empty_tiles.for_each(|(_i, mut tile_data)| {
             if id == tile_data.id {
-                tile_data.player_clicked = true;
+                tile_data.human_clicked = true;
                 tile_data.empty = false;
                 tiles_model.set_row_data(_i, tile_data);
             }
@@ -256,7 +291,7 @@ fn main() {
         let computer_id = free_ids.next().unwrap();
         new_empty_tiles.for_each(|(_i, mut tile_data)| {
             if computer_id == tile_data.id {
-                tile_data.computer_clicked = true;
+                tile_data.machine_clicked = true;
                 tile_data.empty = false;
                 //tile_data.win_color = COMPUTER_WIN_COLOR;
                 tiles_model.set_row_data(_i, tile_data);

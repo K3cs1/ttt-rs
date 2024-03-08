@@ -3,16 +3,16 @@ import { Button, VerticalBox } from "std-widgets.slint";
 struct TileData {
     id: int,
     win_color: brush,
-    player_clicked: bool,
-    computer_clicked: bool,
+    human_clicked: bool,
+    machine_clicked: bool,
     empty: bool
 }
 component TicTacToeTile inherits Rectangle {
     in property <int> id;
-    in property <image> player_icon;
-    in property <image> computer_icon;
-    in-out property <bool> player_clicked;
-    in-out property <bool> computer_clicked;
+    in property <image> human_icon;
+    in property <image> machine_icon;
+    in-out property <bool> human_clicked;
+    in-out property <bool> machine_clicked;
     in-out property <bool> empty;
     in-out property <brush> win_color;
 
@@ -21,16 +21,16 @@ component TicTacToeTile inherits Rectangle {
     Rectangle {
         background: root.win_color;
         Image {
-            visible: root.player_clicked;
-            source: root.player_icon;
+            visible: root.human_clicked;
+            source: root.human_icon;
             width: parent.width - 16px;
             height: parent.height - 16px;
             x: parent.x;
             y: parent.y;
         }
         Image {
-            visible: root.computer_clicked;
-            source: root.computer_icon;
+            visible: root.machine_clicked;
+            source: root.machine_icon;
             width: parent.width - 16px;
             height: parent.height - 16px;
             x: parent.x;
@@ -51,8 +51,8 @@ export component AppWindow inherits Window {
     private property <length> tile-spacing: 10px;
     private property <int> row-count: 3;
     private property <int> column-count: 3;
-    private property <image> player_icon: @image-url("icons/x.png");
-    private property <image> computer_icon: @image-url("icons/o.png");
+    private property <image> human_icon: @image-url("icons/o.png");
+    private property <image> machine_icon: @image-url("icons/x.png");
 
     callback process(int);
 
@@ -64,65 +64,65 @@ export component AppWindow inherits Window {
         {
             id: 0,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         {
             id: 1,
             win_color: Colors.yellow,
-            user_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         {
             id: 2,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         {
             id: 3,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         {
             // Machine start
             id: 4,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: true,
+            human_clicked: false,
+            machine_clicked: true,
             empty: false
         },
         {
             id: 5,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         { 
             id: 6,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         {
             id: 7,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         },
         {
             id: 8,
             win_color: Colors.yellow,
-            player_clicked: false,
-            computer_clicked: false,
+            human_clicked: false,
+            machine_clicked: false,
             empty: true
         }
     ];
@@ -136,11 +136,11 @@ export component AppWindow inherits Window {
         y: root.tile-spacing + floor(i / root.row-count) * (root.tile-size + root.tile-spacing);
         width: root.tile-size;
         height: root.tile-size;
-        player_icon: root.player-icon;
-        computer_icon: root.computer-icon;
+        human_icon: root.human_icon;
+        machine_icon: root.machine_icon;
 
-        player_clicked: tile.player-clicked;
-        computer_clicked: tile.computer_clicked;
+        human_clicked: tile.human_clicked;
+        machine_clicked: tile.machine_clicked;
         empty: tile.empty;
         win_color: tile.win-color;
     }
