@@ -1,5 +1,6 @@
 use log::{info, trace, warn};
 use slint::{Brush, Color, Model, VecModel, Weak};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::option::Option;
@@ -40,15 +41,38 @@ impl Tile {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct Node {
     value: Vec<Tile>,
-    neighbors: Vec<Node>,
+    neighbors: HashSet<Node>,
+
 }
 
-// impl Clone for Node {
-//     fn clone(&self) -> Node {
-//         *self
+impl Hash for Node {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+        //self.neighbors.hash(state);
+    }
+}
+
+// impl<T: Hash> Hash for HashSet<T> {
+//     fn hash<H: Hasher>(&self, state: &mut H) {
+//         let mut sum = 0_u64;
+//         for item in self {
+//             let mut hasher = DefaultHasher::new();
+//             item.hash(&mut hasher);
+//             sum = sum.wrapping_add(hasher.finish());
+//         }
+//         state.write_u64(sum);
+//     }
+    
+//     fn hash_slice<H: Hasher>(data: &[Self], state: &mut H)
+//     where
+//         Self: Sized,
+//     {
+//         for piece in data {
+//             piece.hash(state)
+//         }
 //     }
 // }
 
@@ -56,7 +80,7 @@ impl Node {
     pub fn new(value: Vec<Tile>) -> Self {
         Node {
             value,
-            neighbors: Vec::new(),
+            neighbors: HashSet::new(),
         }
     }
 
@@ -64,84 +88,87 @@ impl Node {
         return self.value.to_owned();
     }
 
-    pub fn get_neighbors(&mut self) -> &Vec<Node> {
+    pub fn get_neighbors(&mut self) -> &HashSet<Node> {
         &self.neighbors
     }
 
-    pub fn connect(&mut self, node: &mut Node) {
-        // if self.eq(node) {
-        // }
-        self.neighbors.push(node.to_owned());
-        node.neighbors.push(self.to_owned());
+    pub fn connect(&mut self, mut node: Node) -> Self {
+        // if self.eq(node) {}
+        // self.neighbors.push(node.to_owned());
+        // node.neighbors.push(self.to_owned());
+        // self.to_owned()
+        //HashSet::from_iter(node.iter().cloned());
+        self.neighbors.insert(node.to_owned());
+        node.neighbors.insert(self.to_owned());
+        self.to_owned()
     }
 }
 
 fn init_nodes() -> Node {
-    //let mut node = Vec::from([Tile::init()]);
     let mut start = Node::new(Vec::from([Tile::init()]));
     let mut level_1_1 = Node::new(Vec::from([Tile::new(4, Player::Machine)]));
-    start.connect(&mut level_1_1);
+    let mut node_1_1 = start.connect(level_1_1);
 
     let mut level_1_2 = Node::new(Vec::from([Tile::new(0, Player::Machine)]));
-    start.connect(&mut level_1_2);
+    let mut node_1_2 = start.connect(level_1_2);
 
     let mut level_2_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
         Tile::new(1, Player::Human),
     ]));
-    level_1_1.connect(&mut level_2_1);
+    let mut node_2_1 = node_1_1.connect(level_2_1);
 
     let mut level_2_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
         Tile::new(0, Player::Human),
     ]));
-    level_1_1.connect(&mut level_2_2);
+    let mut node_2_2 = node_1_1.connect(level_2_2);
 
     let mut level_2_3 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
         Tile::new(1, Player::Human),
     ]));
-    level_1_2.connect(&mut level_2_3);
+    let mut node_2_3 = node_1_2.connect(level_2_3);
 
     let mut level_2_4 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
         Tile::new(2, Player::Human),
     ]));
-    level_1_2.connect(&mut level_2_4);
+    let mut node_2_4 = node_1_2.connect(level_2_4);
 
     let mut level_2_5 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
         Tile::new(4, Player::Human),
     ]));
-    level_1_2.connect(&mut level_2_5);
+    let mut node_2_5 = node_1_2.connect(level_2_5);
 
     let mut level_3_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
         Tile::new(1, Player::Human),
         Tile::new(6, Player::Machine),
     ]));
-    level_2_1.connect(&mut level_3_1);
+    let mut node_3_1 = node_2_1.connect(level_3_1);
 
     let mut level_3_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
         Tile::new(0, Player::Human),
         Tile::new(2, Player::Machine),
     ]));
-    level_2_2.connect(&mut level_3_2);
+    let mut node_3_2 = node_2_2.connect(level_3_2);
 
     let mut level_3_3 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
         Tile::new(2, Player::Human),
         Tile::new(6, Player::Machine),
     ]));
-    level_2_4.connect(&mut level_3_3);
+    let mut node_3_3 = node_2_4.connect(level_3_3);
 
     let mut level_3_4 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
         Tile::new(4, Player::Human),
         Tile::new(8, Player::Machine),
     ]));
-    level_2_5.connect(&mut level_3_4);
+    let mut node_3_4 = node_2_5.connect(level_3_4);
 
     let mut level_4_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -149,7 +176,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Machine),
         Tile::new(0, Player::Human),
     ]));
-    level_3_1.connect(&mut level_4_1);
+    let mut node_4_1 = node_3_1.connect(level_4_1);
 
     let mut level_4_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -157,7 +184,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Machine),
         Tile::new(2, Player::Human),
     ]));
-    level_3_1.connect(&mut level_4_2);
+    let mut node_4_2 = node_3_1.connect(level_4_2);
 
     let mut level_4_3 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -165,7 +192,7 @@ fn init_nodes() -> Node {
         Tile::new(2, Player::Machine),
         Tile::new(3, Player::Human),
     ]));
-    level_3_2.connect(&mut level_4_3);
+    let mut node_4_3 = node_3_2.connect(level_4_3);
 
     let mut level_4_4 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -173,7 +200,7 @@ fn init_nodes() -> Node {
         Tile::new(2, Player::Machine),
         Tile::new(6, Player::Human),
     ]));
-    level_3_2.connect(&mut level_4_4);
+    let mut node_4_4 = node_3_2.connect(level_4_4);
 
     let mut level_4_5 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -181,7 +208,7 @@ fn init_nodes() -> Node {
         Tile::new(2, Player::Machine),
         Tile::new(3, Player::Human),
     ]));
-    level_3_3.connect(&mut level_4_5);
+    let mut node_4_5 = node_3_3.connect(level_4_5);
 
     let mut level_4_6 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -189,7 +216,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Machine),
         Tile::new(1, Player::Human),
     ]));
-    level_3_3.connect(&mut level_4_6);
+    let mut node_4_6 = node_3_3.connect(level_4_6);
 
     let mut level_4_7 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -197,7 +224,7 @@ fn init_nodes() -> Node {
         Tile::new(8, Player::Machine),
         Tile::new(3, Player::Human),
     ]));
-    level_3_4.connect(&mut level_4_7);
+    let mut node_4_7 = node_3_4.connect(level_4_7);
 
     let mut level_4_8 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -205,7 +232,7 @@ fn init_nodes() -> Node {
         Tile::new(8, Player::Machine),
         Tile::new(6, Player::Human),
     ]));
-    level_3_4.connect(&mut level_4_8);
+    let mut node_4_8 = node_3_4.connect(level_4_8);
 
     let mut level_5_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -214,7 +241,7 @@ fn init_nodes() -> Node {
         Tile::new(0, Player::Human),
         Tile::new(2, Player::Machine),
     ]));
-    level_4_1.connect(&mut level_5_1);
+    let mut node_5_1 = node_4_1.connect(level_5_1);
 
     let mut level_5_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -223,7 +250,7 @@ fn init_nodes() -> Node {
         Tile::new(2, Player::Human),
         Tile::new(0, Player::Machine),
     ]));
-    level_4_2.connect(&mut level_5_2);
+    let mut node_5_2 = node_4_2.connect(level_5_2);
 
     let mut level_5_3 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -232,7 +259,7 @@ fn init_nodes() -> Node {
         Tile::new(3, Player::Human),
         Tile::new(6, Player::Machine),
     ]));
-    level_4_3.connect(&mut level_5_3);
+    let mut node_5_3 = node_4_3.connect(level_5_3);
 
     let mut level_5_4 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -241,7 +268,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Human),
         Tile::new(3, Player::Machine),
     ]));
-    level_4_4.connect(&mut level_5_4);
+    let mut node_5_4 = node_4_4.connect(level_5_4);
 
     let mut level_5_5 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -250,7 +277,7 @@ fn init_nodes() -> Node {
         Tile::new(3, Player::Human),
         Tile::new(8, Player::Machine),
     ]));
-    level_4_5.connect(&mut level_5_5);
+    let mut node_5_5 = node_4_5.connect(level_5_5);
 
     let mut level_5_6 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -259,7 +286,7 @@ fn init_nodes() -> Node {
         Tile::new(1, Player::Human),
         Tile::new(3, Player::Machine),
     ]));
-    level_4_6.connect(&mut level_5_6);
+    let mut node_5_6 = node_4_6.connect(level_5_6);
 
     let mut level_5_7 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -268,7 +295,7 @@ fn init_nodes() -> Node {
         Tile::new(3, Player::Human),
         Tile::new(5, Player::Machine),
     ]));
-    level_4_7.connect(&mut level_5_7);
+    let mut node_5_7 = node_4_7.connect(level_5_7);
 
     let mut level_5_8 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -277,7 +304,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Human),
         Tile::new(2, Player::Machine),
     ]));
-    level_4_8.connect(&mut level_5_8);
+    let mut node_5_8 = node_4_8.connect(level_5_8);
 
     let mut level_6_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -287,7 +314,7 @@ fn init_nodes() -> Node {
         Tile::new(0, Player::Machine),
         Tile::new(8, Player::Human),
     ]));
-    level_5_2.connect(&mut level_6_1);
+    let mut node_6_1 = node_5_2.connect(level_6_1);
 
     let mut level_6_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -297,7 +324,7 @@ fn init_nodes() -> Node {
         Tile::new(3, Player::Machine),
         Tile::new(5, Player::Human),
     ]));
-    level_5_4.connect(&mut level_6_2);
+    let mut node_6_2 = node_5_4.connect(level_6_2);
 
     let mut level_6_3 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -307,7 +334,7 @@ fn init_nodes() -> Node {
         Tile::new(3, Player::Machine),
         Tile::new(7, Player::Human),
     ]));
-    level_5_4.connect(&mut level_6_3);
+    let mut node_6_3 = node_5_4.connect(level_6_3);
 
     let mut level_6_4 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -317,7 +344,7 @@ fn init_nodes() -> Node {
         Tile::new(8, Player::Machine),
         Tile::new(7, Player::Human),
     ]));
-    level_5_5.connect(&mut level_6_4);
+    let mut node_6_4 = node_5_5.connect(level_6_4);
 
     let mut level_6_5 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -327,7 +354,7 @@ fn init_nodes() -> Node {
         Tile::new(5, Player::Machine),
         Tile::new(2, Player::Human),
     ]));
-    level_5_7.connect(&mut level_6_5);
+    let mut node_6_5 = node_5_7.connect(level_6_5);
 
     let mut level_6_6 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -337,7 +364,7 @@ fn init_nodes() -> Node {
         Tile::new(5, Player::Machine),
         Tile::new(6, Player::Human),
     ]));
-    level_5_7.connect(&mut level_6_6);
+    let mut node_6_6 = node_5_7.connect(level_6_6);
 
     let mut level_6_7 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -347,7 +374,7 @@ fn init_nodes() -> Node {
         Tile::new(5, Player::Machine),
         Tile::new(1, Player::Human),
     ]));
-    level_5_8.connect(&mut level_6_7);
+    let mut node_6_7 = node_5_8.connect(level_6_7);
 
     let mut level_7_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -358,7 +385,7 @@ fn init_nodes() -> Node {
         Tile::new(8, Player::Human),
         Tile::new(3, Player::Machine),
     ]));
-    level_6_1.connect(&mut level_7_1);
+    let mut node_7_1 = node_6_1.connect(level_7_1);
 
     let mut level_7_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -369,7 +396,7 @@ fn init_nodes() -> Node {
         Tile::new(5, Player::Human),
         Tile::new(1, Player::Machine),
     ]));
-    level_6_2.connect(&mut level_7_2);
+    let mut node_7_2 = node_6_2.connect(level_7_2);
 
     let mut level_7_3 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -380,7 +407,7 @@ fn init_nodes() -> Node {
         Tile::new(7, Player::Human),
         Tile::new(5, Player::Machine),
     ]));
-    level_6_3.connect(&mut level_7_3);
+    let mut node_7_3 = node_6_3.connect(level_7_3);
 
     let mut level_7_4 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -391,7 +418,7 @@ fn init_nodes() -> Node {
         Tile::new(7, Player::Human),
         Tile::new(4, Player::Machine),
     ]));
-    level_6_4.connect(&mut level_7_4);
+    let mut node_7_4 = node_6_4.connect(level_7_4);
 
     let mut level_7_5 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -402,7 +429,7 @@ fn init_nodes() -> Node {
         Tile::new(2, Player::Human),
         Tile::new(6, Player::Machine),
     ]));
-    level_6_5.connect(&mut level_7_5);
+    let mut node_7_5 = node_6_5.connect(level_7_5);
 
     let mut level_7_6 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -413,7 +440,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Human),
         Tile::new(2, Player::Machine),
     ]));
-    level_6_6.connect(&mut level_7_6);
+    let mut node_7_6 = node_6_6.connect(level_7_6);
 
     let mut level_7_7 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -424,7 +451,7 @@ fn init_nodes() -> Node {
         Tile::new(1, Player::Human),
         Tile::new(5, Player::Machine),
     ]));
-    level_6_7.connect(&mut level_7_7);
+    let mut node_7_7 = node_6_7.connect(level_7_7);
 
     let mut level_8_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -436,7 +463,7 @@ fn init_nodes() -> Node {
         Tile::new(1, Player::Machine),
         Tile::new(8, Player::Human),
     ]));
-    level_7_2.connect(&mut level_8_1);
+    let mut node_8_1 = node_7_2.connect(level_8_1);
 
     let mut level_8_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -448,7 +475,7 @@ fn init_nodes() -> Node {
         Tile::new(1, Player::Machine),
         Tile::new(7, Player::Human),
     ]));
-    level_7_2.connect(&mut level_8_2);
+    let mut node_8_2 = node_7_2.connect(level_8_2);
 
     let mut level_8_3 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -460,7 +487,7 @@ fn init_nodes() -> Node {
         Tile::new(2, Player::Machine),
         Tile::new(1, Player::Human),
     ]));
-    level_7_5.connect(&mut level_8_3);
+    let mut node_8_3 = node_7_5.connect(level_8_3);
 
     let mut level_8_4 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -472,7 +499,7 @@ fn init_nodes() -> Node {
         Tile::new(6, Player::Machine),
         Tile::new(7, Player::Human),
     ]));
-    level_7_5.connect(&mut level_8_4);
+    let mut node_8_4 = node_7_5.connect(level_8_4);
 
     let mut level_9_1 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -485,7 +512,7 @@ fn init_nodes() -> Node {
         Tile::new(8, Player::Human),
         Tile::new(7, Player::Machine),
     ]));
-    level_8_1.connect(&mut level_9_1);
+    let mut node_9_1 = node_8_1.connect(level_9_1);
 
     let mut level_9_2 = Node::new(Vec::from([
         Tile::new(4, Player::Machine),
@@ -498,7 +525,7 @@ fn init_nodes() -> Node {
         Tile::new(7, Player::Human),
         Tile::new(8, Player::Machine),
     ]));
-    level_8_1.connect(&mut level_9_2);
+    let mut node_9_2 = node_8_1.connect(level_9_2);
 
     let mut level_9_3 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -511,7 +538,7 @@ fn init_nodes() -> Node {
         Tile::new(1, Player::Human),
         Tile::new(7, Player::Machine),
     ]));
-    level_8_3.connect(&mut level_9_3);
+    let mut node_9_3 = node_8_3.connect(level_9_3);
 
     let mut level_9_4 = Node::new(Vec::from([
         Tile::new(0, Player::Machine),
@@ -524,7 +551,7 @@ fn init_nodes() -> Node {
         Tile::new(7, Player::Human),
         Tile::new(1, Player::Machine),
     ]));
-    level_8_4.connect(&mut level_9_4);
+    let mut node_9_4 = node_8_4.connect(level_9_4);
 
     start
 }
