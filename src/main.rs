@@ -636,21 +636,18 @@ fn build_graph() -> Graph<&'static str, &'static str> {
     graph
 }
 
-fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Option<Vec<Tile>> {
+fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
     let actual_state: Vec<Tile> = build_steps_from_model(&tiles_model);
     let steps_map: HashMap<&str, Vec<Tile>> = init_steps_map();
     let graph = build_graph();
-    let mut founded_key;
-    // for val in steps_map.iter() {
-    //     if vec_tile_compare(val.1, &actual_state) {
-    //         founded_key = val.0;
-    //         info!("Founded {:?}", founded_key);
-    //     }
-    // }
-    for entry in steps_map {
+    let mut founded_key = None;
+    let mut founded_state = None;
+
+    for entry in steps_map.clone() {
         if vec_tile_compare(&entry.1, &actual_state) {
-            founded_key = entry.0;
+            founded_key = Some(entry.0);
             info!("Founded {:?}", founded_key);
+            break;
         }
     }
 
@@ -658,11 +655,32 @@ fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Option<Vec<Tile>> {
         let mut bfs = Bfs::new(&graph, start);
 
         while let Some(nx) = bfs.next(&graph) {
-            info!(" {}", graph[nx]);
+            match founded_key {
+                Some(key) => {
+                    if graph[nx].eq(key) {
+                        // let founded_state = steps_map.get(key);
+                        // info!("Found state: {:?}", founded_state.unwrap());
+                        founded_state = Some(key);
+                        break;
+                    }
+                }
+                None => (),
+            }
         }
     }
 
-    None
+    let mut founded_state_vec = Vec::new();
+    match founded_state {
+        Some(key) => {
+            let hash_map = steps_map.clone();
+            let result = &hash_map.get(key);
+            return result.unwrap().to_owned();
+        }
+        None => {
+            warn!("State not found");
+            return founded_state_vec;
+        }
+    }
 }
 
 fn build_steps_from_model(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
@@ -679,25 +697,12 @@ fn build_steps_from_model(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
     steps
 }
 
-fn tile_eq(tile_a: &Tile, tile_b: &Tile) -> bool {
-    (tile_a == tile_b) || (tile_a.field_id == tile_b.field_id && tile_a.player == tile_b.player)
-}
-
 fn vec_tile_compare(vector_a: &Vec<Tile>, vector_b: &Vec<Tile>) -> bool {
     if vector_a.len() == vector_b.len() {
-        for va in vector_a {
-            
-        }
+        let a_set: HashSet<_> = vector_a.iter().copied().collect();
+        return vector_b.iter().all(|item| a_set.contains(item));
     }
-        // && vector_a
-        //     .iter()
-        //     .zip(vector_b)
-        //     .all(|(tile_a, tile_b)| tile_eq(tile_a, tile_b))
-}
-
-fn iters_equal_anyorder<T: Eq + Hash>(mut i1:impl Iterator<Item = T>, i2: impl Iterator<Item = T>) -> bool {
-    let set:HashSet<T> = i2.collect();
-    i1.all(|x| set.contains(&x))
+    false
 }
 
 fn main() {
@@ -735,12 +740,7 @@ fn main() {
         });
 
         //Computer turn
-        match search_step(&tiles_model) {
-            Some(node) => {
-                info!("Node: {:?}", node);
-            }
-            None => warn!("Step not found!"),
-        }
+        let founded_state_vec = search_step(&tiles_model);
 
         // let mut new_empty_tiles = tiles_model
         //     .iter()
