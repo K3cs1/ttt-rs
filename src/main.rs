@@ -1,11 +1,16 @@
 use log::{info, trace, warn};
+use petgraph::adj::NodeIndex;
+use petgraph::csr::IndexType;
 use petgraph::dot::Dot;
 use petgraph::visit::Bfs;
 use petgraph::Graph;
 use petgraph_evcxr::draw_graph;
+use rand::seq::SliceRandom;
+use rand::Rng;
 use slint::{Brush, Color, Model, VecModel, Weak};
 use std::collections::{HashMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
+use std::ops::Index;
 use std::option::Option;
 use std::rc::Rc;
 
@@ -636,12 +641,12 @@ fn build_graph() -> Graph<&'static str, &'static str> {
     graph
 }
 
-fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
+fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
     let actual_state: Vec<Tile> = build_steps_from_model(&tiles_model);
     let steps_map: HashMap<&str, Vec<Tile>> = init_steps_map();
     let graph = build_graph();
     let mut founded_key = None;
-    let mut founded_state = None;
+    let mut next_state = None;
 
     for entry in steps_map.clone() {
         if vec_tile_compare(&entry.1, &actual_state) {
@@ -658,9 +663,20 @@ fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
             match founded_key {
                 Some(key) => {
                     if graph[nx].eq(key) {
-                        // let founded_state = steps_map.get(key);
-                        // info!("Found state: {:?}", founded_state.unwrap());
-                        founded_state = Some(key);
+                        let neighbours = graph.neighbors(nx);
+                        let mut rng = rand::thread_rng();
+                        let count = neighbours.clone().count();
+                        info!("Count: {}", count);
+                        let mut neighbour_index: usize = 0;
+                        if count >= 1 {
+                            neighbour_index = rng.gen_range(0..count);
+                        }
+                        info!("Random neighbour_index: {:?}", neighbour_index);
+
+                        neighbours.for_each(|nb_node_index| {
+                            info!("next_node_index: {:?}", neighbour_index.index());
+                            next_state = Some(graph[nb_node_index]);
+                        });
                         break;
                     }
                 }
@@ -669,16 +685,17 @@ fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
         }
     }
 
-    let mut founded_state_vec = Vec::new();
-    match founded_state {
+    let mut next_state_vec = Vec::new();
+    match next_state {
         Some(key) => {
+            info!("Next state key: {:?}", key);
             let hash_map = steps_map.clone();
             let result = &hash_map.get(key);
             return result.unwrap().to_owned();
         }
         None => {
             warn!("State not found");
-            return founded_state_vec;
+            return next_state_vec;
         }
     }
 }
@@ -739,8 +756,27 @@ fn main() {
             }
         });
 
-        //Computer turn
-        let founded_state_vec = search_step(&tiles_model);
+        //Machine turn
+        let machine_tiles = tiles_model.iter().enumerate();
+        let founded_state_vec = search_next_step(&tiles_model);
+        let machine_next_tile = founded_state_vec.get(founded_state_vec.len() - 1);
+        match machine_next_tile {
+            Some(mn_tile) => {
+                machine_tiles.for_each(|(_i, mut tile_data)| {
+                    if tile_data.id == mn_tile.field_id {
+                        tile_data.machine_clicked = true;
+                        tile_data.empty = false;
+                        tiles_model.set_row_data(_i, tile_data);
+                    }
+                });
+            }
+            None => {
+                warn!("Machine next tile not found!");
+            }
+        }
+
+        //TODO Is there a winner?
+        
 
         // let mut new_empty_tiles = tiles_model
         //     .iter()

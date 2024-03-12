@@ -3815,6 +3815,7 @@ dependencies = [
  "log",
  "petgraph",
  "petgraph-evcxr",
+ "rand",
  "slint",
  "slint-build",
 ]
