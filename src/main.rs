@@ -4,7 +4,7 @@ use petgraph::visit::Bfs;
 use petgraph::Graph;
 use petgraph_evcxr::draw_graph;
 use slint::{Brush, Color, Model, VecModel, Weak};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::option::Option;
 use std::rc::Rc;
@@ -637,13 +637,19 @@ fn build_graph() -> Graph<&'static str, &'static str> {
 }
 
 fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Option<Vec<Tile>> {
-    let actual_step: Vec<Tile> = build_steps_from_model(&tiles_model);
+    let actual_state: Vec<Tile> = build_steps_from_model(&tiles_model);
     let steps_map: HashMap<&str, Vec<Tile>> = init_steps_map();
     let graph = build_graph();
     let mut founded_key;
-    for val in steps_map.iter() {
-        if vec_tile_compare(val.1, &actual_step) {
-            founded_key = val.0;
+    // for val in steps_map.iter() {
+    //     if vec_tile_compare(val.1, &actual_state) {
+    //         founded_key = val.0;
+    //         info!("Founded {:?}", founded_key);
+    //     }
+    // }
+    for entry in steps_map {
+        if vec_tile_compare(&entry.1, &actual_state) {
+            founded_key = entry.0;
             info!("Founded {:?}", founded_key);
         }
     }
@@ -651,28 +657,25 @@ fn search_step(tiles_model: &Rc<VecModel<TileData>>) -> Option<Vec<Tile>> {
     for start in graph.node_indices() {
         let mut bfs = Bfs::new(&graph, start);
 
-        while let Some(visited) = bfs.next(&graph) {
-            info!(" {}", visited.index());
+        while let Some(nx) = bfs.next(&graph) {
+            info!(" {}", graph[nx]);
         }
     }
-
-    //draw_graph(&graph);
 
     None
 }
 
 fn build_steps_from_model(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
-    let mut all_tiles = tiles_model.iter().enumerate();
     let mut steps: Vec<Tile> = Vec::new();
-    if let Some((_tile_idx, tile_data)) = all_tiles.next() {
-        //let title_field_id = usize::try_from(tile_data.id).unwrap();
+    tiles_model.iter().enumerate().for_each(|(_i, tile_data)| {
         if tile_data.human_clicked == true {
             steps.push(Tile::new(tile_data.id, Player::Human));
         }
         if tile_data.machine_clicked == true {
             steps.push(Tile::new(tile_data.id, Player::Machine));
         }
-    }
+    });
+
     steps
 }
 
@@ -680,12 +683,21 @@ fn tile_eq(tile_a: &Tile, tile_b: &Tile) -> bool {
     (tile_a == tile_b) || (tile_a.field_id == tile_b.field_id && tile_a.player == tile_b.player)
 }
 
-fn vec_tile_compare(vector_a: &[Tile], vector_b: &[Tile]) -> bool {
-    (vector_a.len() == vector_b.len())
-        && vector_a
-            .iter()
-            .zip(vector_b)
-            .all(|(tile_a, tile_b)| tile_eq(tile_a, tile_b))
+fn vec_tile_compare(vector_a: &Vec<Tile>, vector_b: &Vec<Tile>) -> bool {
+    if vector_a.len() == vector_b.len() {
+        for va in vector_a {
+            
+        }
+    }
+        // && vector_a
+        //     .iter()
+        //     .zip(vector_b)
+        //     .all(|(tile_a, tile_b)| tile_eq(tile_a, tile_b))
+}
+
+fn iters_equal_anyorder<T: Eq + Hash>(mut i1:impl Iterator<Item = T>, i2: impl Iterator<Item = T>) -> bool {
+    let set:HashSet<T> = i2.collect();
+    i1.all(|x| set.contains(&x))
 }
 
 fn main() {
@@ -697,7 +709,7 @@ fn main() {
     let _ui_weak: Weak<AppWindow> = ui.as_weak();
 
     let mut ttt_tiles: Vec<TileData> = ui.get_ttt_tiles().iter().collect();
-    ttt_tiles.extend(ttt_tiles.clone());
+    //ttt_tiles.extend(ttt_tiles.clone());
 
     let tiles_model: Rc<VecModel<TileData>> = Rc::new(VecModel::from(ttt_tiles));
 
@@ -710,10 +722,8 @@ fn main() {
         //let human_win_combo = has_human_win_combo(tiles_model.clone());
         //let machine_win_combo = has_machine_win_combo(tiles_model.clone());
 
-        let empty_tiles = tiles_model
-            .iter()
-            .enumerate()
-            .filter(|(_, tile)| tile.empty);
+        let empty_tiles = tiles_model.iter().enumerate();
+        //.filter(|(_, tile)| tile.empty);
 
         //Human turn
         empty_tiles.for_each(|(_i, mut tile_data)| {
