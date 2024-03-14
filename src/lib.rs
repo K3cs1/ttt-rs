@@ -46,6 +46,7 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
     let graph = WinGraph::build_graph();
     let mut founded_key: Option<&str> = None;
     let mut next_state = None;
+    let mut rng: ThreadRng = rand::thread_rng();
 
     for entry in steps_map.clone() {
         if vec_tile_compare(&entry.1, &actual_state) {
@@ -63,7 +64,7 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
                 Some(key) => {
                     if graph[nx].eq(key) {
                         let neighbours: Neighbors<'_, &str> = graph.neighbors(nx);
-                        let mut rng: ThreadRng = rand::thread_rng();
+
                         let count: usize = neighbours.clone().count();
                         info!("Count: {}", count);
                         let mut neighbour_index: usize = 0;
@@ -79,12 +80,37 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
                         break;
                     }
                 }
-                None => (),
+                None => {
+                    let empty_tile_ids = tiles_model
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, tile)| tile.empty == true)
+                        .map(|(_, tile_data)| tile_data.id)
+                        .collect::<Vec<i32>>();
+                    info!("empty_tile_ids: {:?}", empty_tile_ids);
+
+                    if empty_tile_ids.is_empty() {
+                        break;
+                    }
+                    let rnd_tile_idx = rng.gen_range(0..empty_tile_ids.len());
+                    let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();                  
+
+                    for (_i, mut tile_data) in tiles_model
+                        .iter()
+                        .enumerate() {
+                        if tile_data.id == *rnd_tile_id {
+                            tile_data.machine_clicked = true;
+                            tile_data.empty = false;
+                            tiles_model.set_row_data(_i, tile_data);
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
 
-    let next_state_vec = Vec::new();
     match next_state {
         Some(key) => {
             info!("Next state key: {:?}", key);
@@ -94,7 +120,7 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
         }
         None => {
             warn!("State not found");
-            return next_state_vec;
+            return build_steps_from_model(&tiles_model);
         }
     }
 }
@@ -109,7 +135,7 @@ fn build_steps_from_model(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
             steps.push(Tile::new(tile_data.id, Player::Machine));
         }
     });
-
+    info!("build_steps_from_model steps: {:?}", &steps);
     steps
 }
 
