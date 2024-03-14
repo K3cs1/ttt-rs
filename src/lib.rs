@@ -1,4 +1,5 @@
 use log::{info, warn};
+use petgraph::algo::tred;
 use petgraph::csr::IndexType;
 use petgraph::graph::Neighbors;
 use petgraph::prelude::NodeIndex;
@@ -93,18 +94,22 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
                         break;
                     }
                     let rnd_tile_idx = rng.gen_range(0..empty_tile_ids.len());
-                    let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();                  
+                    info!("rnd_tile_idx: {:?}", rnd_tile_idx);
+                    let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();
+                    info!("rnd_tile_id: {:?}", rnd_tile_id);
 
-                    for (_i, mut tile_data) in tiles_model
+                    let empty_tiles = tiles_model
                         .iter()
-                        .enumerate() {
-                        if tile_data.id == *rnd_tile_id {
+                        .enumerate()
+                        .filter(|(_, tile)| tile.empty == true);
+
+                    tiles_model.iter().enumerate().for_each(|(_i, mut tile_data)| {
+                        if tile_data.id == *rnd_tile_id && tile_data.empty == true {
                             tile_data.machine_clicked = true;
                             tile_data.empty = false;
                             tiles_model.set_row_data(_i, tile_data);
-                            break;
                         }
-                    }
+                    });
                     break;
                 }
             }
@@ -127,14 +132,13 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
 
 fn build_steps_from_model(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
     let mut steps: Vec<Tile> = Vec::new();
-    tiles_model.iter().enumerate().for_each(|(_i, tile_data)| {
-        if tile_data.human_clicked == true {
+    for (_i, tile_data) in tiles_model.iter().enumerate() {
+        if tile_data.human_clicked == true && tile_data.empty == false {
             steps.push(Tile::new(tile_data.id, Player::Human));
-        }
-        if tile_data.machine_clicked == true {
+        } else if tile_data.machine_clicked == true && tile_data.empty == false {
             steps.push(Tile::new(tile_data.id, Player::Machine));
         }
-    });
+    }
     info!("build_steps_from_model steps: {:?}", &steps);
     steps
 }
@@ -152,18 +156,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 0 && tile.machine_clicked == true)
-                    || (tile.id == 1 && tile.machine_clicked == true)
-                    || (tile.id == 2 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 0 && tile.machine_clicked == true)
+                        || (tile.id == 1 && tile.machine_clicked == true)
+                        || (tile.id == 2 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 0 && tile.human_clicked == true)
-                    || (tile.id == 1 && tile.human_clicked == true)
-                    || (tile.id == 2 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 0 && tile.human_clicked == true)
+                        || (tile.id == 1 && tile.human_clicked == true)
+                        || (tile.id == 2 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -181,18 +187,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 3 && tile.machine_clicked == true)
-                    || (tile.id == 4 && tile.machine_clicked == true)
-                    || (tile.id == 5 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 3 && tile.machine_clicked == true)
+                        || (tile.id == 4 && tile.machine_clicked == true)
+                        || (tile.id == 5 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 3 && tile.human_clicked == true)
-                    || (tile.id == 4 && tile.human_clicked == true)
-                    || (tile.id == 5 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 3 && tile.human_clicked == true)
+                        || (tile.id == 4 && tile.human_clicked == true)
+                        || (tile.id == 5 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -210,18 +218,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 6 && tile.machine_clicked == true)
-                    || (tile.id == 7 && tile.machine_clicked == true)
-                    || (tile.id == 8 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 6 && tile.machine_clicked == true)
+                        || (tile.id == 7 && tile.machine_clicked == true)
+                        || (tile.id == 8 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 6 && tile.human_clicked == true)
-                    || (tile.id == 7 && tile.human_clicked == true)
-                    || (tile.id == 8 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 6 && tile.human_clicked == true)
+                        || (tile.id == 7 && tile.human_clicked == true)
+                        || (tile.id == 8 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -239,18 +249,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 0 && tile.machine_clicked == true)
-                    || (tile.id == 3 && tile.machine_clicked == true)
-                    || (tile.id == 6 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 0 && tile.machine_clicked == true)
+                        || (tile.id == 3 && tile.machine_clicked == true)
+                        || (tile.id == 6 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 0 && tile.human_clicked == true)
-                    || (tile.id == 3 && tile.human_clicked == true)
-                    || (tile.id == 6 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 0 && tile.human_clicked == true)
+                        || (tile.id == 3 && tile.human_clicked == true)
+                        || (tile.id == 6 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -268,18 +280,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 1 && tile.machine_clicked == true)
-                    || (tile.id == 4 && tile.machine_clicked == true)
-                    || (tile.id == 7 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 1 && tile.machine_clicked == true)
+                        || (tile.id == 4 && tile.machine_clicked == true)
+                        || (tile.id == 7 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 1 && tile.human_clicked == true)
-                    || (tile.id == 4 && tile.human_clicked == true)
-                    || (tile.id == 7 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 1 && tile.human_clicked == true)
+                        || (tile.id == 4 && tile.human_clicked == true)
+                        || (tile.id == 7 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -297,18 +311,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 2 && tile.machine_clicked == true)
-                    || (tile.id == 5 && tile.machine_clicked == true)
-                    || (tile.id == 8 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 2 && tile.machine_clicked == true)
+                        || (tile.id == 5 && tile.machine_clicked == true)
+                        || (tile.id == 8 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 2 && tile.human_clicked == true)
-                    || (tile.id == 5 && tile.human_clicked == true)
-                    || (tile.id == 8 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 2 && tile.human_clicked == true)
+                        || (tile.id == 5 && tile.human_clicked == true)
+                        || (tile.id == 8 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -326,18 +342,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 0 && tile.machine_clicked == true)
-                    || (tile.id == 4 && tile.machine_clicked == true)
-                    || (tile.id == 8 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 0 && tile.machine_clicked == true)
+                        || (tile.id == 4 && tile.machine_clicked == true)
+                        || (tile.id == 8 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 0 && tile.human_clicked == true)
-                    || (tile.id == 4 && tile.human_clicked == true)
-                    || (tile.id == 8 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 0 && tile.human_clicked == true)
+                        || (tile.id == 4 && tile.human_clicked == true)
+                        || (tile.id == 8 && tile.human_clicked == true))
                 {
                     return true;
                 }
@@ -355,18 +373,20 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
         .iter()
         .filter(|tile| match player {
             Player::Machine => {
-                if (tile.id == 2 && tile.machine_clicked == true)
-                    || (tile.id == 4 && tile.machine_clicked == true)
-                    || (tile.id == 6 && tile.machine_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 2 && tile.machine_clicked == true)
+                        || (tile.id == 4 && tile.machine_clicked == true)
+                        || (tile.id == 6 && tile.machine_clicked == true))
                 {
                     return true;
                 }
                 false
             }
             Player::Human => {
-                if (tile.id == 2 && tile.human_clicked == true)
-                    || (tile.id == 4 && tile.human_clicked == true)
-                    || (tile.id == 6 && tile.human_clicked == true)
+                if tile.empty == false
+                    && ((tile.id == 2 && tile.human_clicked == true)
+                        || (tile.id == 4 && tile.human_clicked == true)
+                        || (tile.id == 6 && tile.human_clicked == true))
                 {
                     return true;
                 }

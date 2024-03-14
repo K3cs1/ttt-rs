@@ -24,27 +24,27 @@ fn main() {
     let mut rng = rand::thread_rng();
     let middle_or_top_right = rng.gen_range(0..2);
     if middle_or_top_right == 1 {
-        tiles_model
+        for (_i, mut tile_data) in tiles_model
             .iter()
-            .enumerate()
-            .for_each(|(_i, mut tile_data)| {
-                if tile_data.id == 4 {
-                    tile_data.machine_clicked = true;
-                    tile_data.empty = false;
-                    tiles_model.set_row_data(_i, tile_data);
-                }
-            });
+            .enumerate() {
+            if tile_data.id == 4 {
+                tile_data.machine_clicked = true;
+                tile_data.empty = false;
+                tiles_model.set_row_data(_i, tile_data);
+                break;
+            }
+        }
     } else {
-        tiles_model
+        for (_i, mut tile_data) in tiles_model
             .iter()
-            .enumerate()
-            .for_each(|(_i, mut tile_data)| {
-                if tile_data.id == 0 {
-                    tile_data.machine_clicked = true;
-                    tile_data.empty = false;
-                    tiles_model.set_row_data(_i, tile_data);
-                }
-            });
+            .enumerate() {
+            if tile_data.id == 0 {
+                tile_data.machine_clicked = true;
+                tile_data.empty = false;
+                tiles_model.set_row_data(_i, tile_data);
+                break;
+            }
+        }
     }
 
     ui.set_ttt_tiles(tiles_model.clone().into());
@@ -53,16 +53,16 @@ fn main() {
         info!("Selected id: {}", id);
 
         //Human turn
-        tiles_model
+        for (_i, mut tile_data) in tiles_model
             .iter()
-            .enumerate()
-            .for_each(|(_i, mut tile_data)| {
-                if id == tile_data.id {
-                    tile_data.human_clicked = true;
-                    tile_data.empty = false;
-                    tiles_model.set_row_data(_i, tile_data);
-                }
-            });
+            .enumerate() {
+            if id == tile_data.id {
+                tile_data.human_clicked = true;
+                tile_data.empty = false;
+                tiles_model.set_row_data(_i, tile_data);
+                break;
+            }
+        }
 
         //Machine turn
         let machine_tiles = tiles_model.iter().enumerate();
@@ -70,13 +70,14 @@ fn main() {
         let machine_next_tile = founded_state_vec.get(founded_state_vec.len() - 1);
         match machine_next_tile {
             Some(mn_tile) => {
-                machine_tiles.for_each(|(_i, mut tile_data)| {
+                for (_i, mut tile_data) in machine_tiles {
                     if tile_data.id == mn_tile.field_id {
                         tile_data.machine_clicked = true;
                         tile_data.empty = false;
                         tiles_model.set_row_data(_i, tile_data);
+                        break;
                     }
-                });
+                }
             }
             None => {
                 warn!("Machine next tile not found!");
@@ -89,7 +90,7 @@ fn main() {
                 .iter()
                 .enumerate()
                 .for_each(|(_i, mut tile_data)| {
-                    if win_combo.contains(&tile_data.id) && tile_data.machine_clicked == true {
+                    if win_combo.contains(&tile_data.id) && tile_data.machine_clicked == true && tile_data.empty == false {
                         tile_data.win_color = MACHINE_WIN_COLOR;
                         tiles_model.set_row_data(_i, tile_data);
                     }
@@ -101,7 +102,7 @@ fn main() {
                     .iter()
                     .enumerate()
                     .for_each(|(_i, mut tile_data)| {
-                        if win_combo.contains(&tile_data.id) && tile_data.machine_clicked == true {
+                        if win_combo.contains(&tile_data.id) && tile_data.human_clicked == true && tile_data.empty == false {
                             tile_data.win_color = HUMAN_WIN_COLOR;
                             tiles_model.set_row_data(_i, tile_data);
                         }
