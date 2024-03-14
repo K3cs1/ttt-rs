@@ -1,6 +1,9 @@
 use log::{info, warn};
 use petgraph::csr::IndexType;
+use petgraph::graph::Neighbors;
+use petgraph::prelude::NodeIndex;
 use petgraph::visit::Bfs;
+use rand::prelude::ThreadRng;
 use rand::Rng;
 use slint::{Model, VecModel};
 use std::collections::{HashMap, HashSet};
@@ -10,16 +13,9 @@ use wingraph::WinGraph;
 mod wingraph;
 
 slint::include_modules!();
-// slint::slint! {
-//     import { AppWindow } from "ui/appwindow.slint";
-// }
-
-// slint::slint! {
-//     import { AppWindow } from "ui/appwindow.slint";
-// }
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-enum Player {
+pub enum Player {
     Machine,
     Human,
     Nobody,
@@ -66,17 +62,17 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
             match founded_key {
                 Some(key) => {
                     if graph[nx].eq(key) {
-                        let neighbours = graph.neighbors(nx);
-                        let mut rng = rand::thread_rng();
+                        let neighbours: Neighbors<'_, &str> = graph.neighbors(nx);
+                        let mut rng: ThreadRng = rand::thread_rng();
                         let count: usize = neighbours.clone().count();
                         info!("Count: {}", count);
                         let mut neighbour_index: usize = 0;
                         if count >= 1 {
-                            neighbour_index = rng.gen_range(0..count);
+                            neighbour_index = rng.gen_range(0..count + 1);
                         }
                         info!("Random neighbour_index: {:?}", neighbour_index);
 
-                        neighbours.for_each(|nb_node_index| {
+                        neighbours.for_each(|nb_node_index: NodeIndex| {
                             info!("next_node_index: {:?}", neighbour_index.index());
                             next_state = Some(graph[nb_node_index]);
                         });
@@ -88,7 +84,7 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
         }
     }
 
-    let mut next_state_vec = Vec::new();
+    let next_state_vec = Vec::new();
     match next_state {
         Some(key) => {
             info!("Next state key: {:?}", key);
@@ -125,142 +121,237 @@ fn vec_tile_compare(vector_a: &Vec<Tile>, vector_b: &Vec<Tile>) -> bool {
     false
 }
 
-pub fn get_machine_win_combos(tiles_model: &Rc<VecModel<TileData>>) -> Vec<i32> {
-    let mut counter = 0;
-    counter = tiles_model
+pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> Vec<i32> {
+    let mut counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 0 && tile.machine_clicked == true)
-                || (tile.id == 1 && tile.machine_clicked == true)
-                || (tile.id == 2 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 0 && tile.machine_clicked == true)
+                    || (tile.id == 1 && tile.machine_clicked == true)
+                    || (tile.id == 2 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 0 && tile.human_clicked == true)
+                    || (tile.id == 1 && tile.human_clicked == true)
+                    || (tile.id == 2 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![0,1,2];
+        return vec![0, 1, 2];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 3 && tile.machine_clicked == true)
-                || (tile.id == 4 && tile.machine_clicked == true)
-                || (tile.id == 5 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 3 && tile.machine_clicked == true)
+                    || (tile.id == 4 && tile.machine_clicked == true)
+                    || (tile.id == 5 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 3 && tile.human_clicked == true)
+                    || (tile.id == 4 && tile.human_clicked == true)
+                    || (tile.id == 5 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![3,4,5];
+        return vec![3, 4, 5];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 6 && tile.machine_clicked == true)
-                || (tile.id == 7 && tile.machine_clicked == true)
-                || (tile.id == 8 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 6 && tile.machine_clicked == true)
+                    || (tile.id == 7 && tile.machine_clicked == true)
+                    || (tile.id == 8 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 6 && tile.human_clicked == true)
+                    || (tile.id == 7 && tile.human_clicked == true)
+                    || (tile.id == 8 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![6,7,8];
+        return vec![6, 7, 8];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 0 && tile.machine_clicked == true)
-                || (tile.id == 3 && tile.machine_clicked == true)
-                || (tile.id == 6 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 0 && tile.machine_clicked == true)
+                    || (tile.id == 3 && tile.machine_clicked == true)
+                    || (tile.id == 6 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 0 && tile.human_clicked == true)
+                    || (tile.id == 3 && tile.human_clicked == true)
+                    || (tile.id == 6 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![0,3,6];
+        return vec![0, 3, 6];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 1 && tile.machine_clicked == true)
-                || (tile.id == 4 && tile.machine_clicked == true)
-                || (tile.id == 7 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 1 && tile.machine_clicked == true)
+                    || (tile.id == 4 && tile.machine_clicked == true)
+                    || (tile.id == 7 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 1 && tile.human_clicked == true)
+                    || (tile.id == 4 && tile.human_clicked == true)
+                    || (tile.id == 7 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![1,4,7];
+        return vec![1, 4, 7];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 2 && tile.machine_clicked == true)
-                || (tile.id == 5 && tile.machine_clicked == true)
-                || (tile.id == 8 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 2 && tile.machine_clicked == true)
+                    || (tile.id == 5 && tile.machine_clicked == true)
+                    || (tile.id == 8 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 2 && tile.human_clicked == true)
+                    || (tile.id == 5 && tile.human_clicked == true)
+                    || (tile.id == 8 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![2,5,8];
+        return vec![2, 5, 8];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 0 && tile.machine_clicked == true)
-                || (tile.id == 4 && tile.machine_clicked == true)
-                || (tile.id == 8 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 0 && tile.machine_clicked == true)
+                    || (tile.id == 4 && tile.machine_clicked == true)
+                    || (tile.id == 8 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 0 && tile.human_clicked == true)
+                    || (tile.id == 4 && tile.human_clicked == true)
+                    || (tile.id == 8 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![0,4,8];
+        return vec![0, 4, 8];
     }
 
     counter = tiles_model
         .iter()
-        .filter(|tile| {
-            if (tile.id == 2 && tile.machine_clicked == true)
-                || (tile.id == 4 && tile.machine_clicked == true)
-                || (tile.id == 6 && tile.machine_clicked == true)
-            {
-                return true;
+        .filter(|tile| match player {
+            Player::Machine => {
+                if (tile.id == 2 && tile.machine_clicked == true)
+                    || (tile.id == 4 && tile.machine_clicked == true)
+                    || (tile.id == 6 && tile.machine_clicked == true)
+                {
+                    return true;
+                }
+                false
             }
-            false
+            Player::Human => {
+                if (tile.id == 2 && tile.human_clicked == true)
+                    || (tile.id == 4 && tile.human_clicked == true)
+                    || (tile.id == 6 && tile.human_clicked == true)
+                {
+                    return true;
+                }
+                false
+            }
+            Player::Nobody => false,
         })
         .count();
 
     if counter == 3 {
-        return vec![2,4,6];
+        return vec![2, 4, 6];
     }
 
     Vec::new()
