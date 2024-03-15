@@ -84,6 +84,10 @@ fn main() {
                 }
             }
         }
+        
+        if has_winner(&tiles_model) {
+            return;
+        }
     });
 
     ui.run().unwrap();
