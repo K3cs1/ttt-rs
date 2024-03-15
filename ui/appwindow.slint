@@ -1,12 +1,11 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, VerticalBox, GridBox } from "std-widgets.slint";
 
 struct TileData {
     id: int,
     win_color: brush,
     human_clicked: bool,
     machine_clicked: bool,
-    empty: bool
-}
+    empty: bool}
 component TicTacToeTile inherits Rectangle {
     in property <int> id;
     in property <image> human_icon;
@@ -15,32 +14,32 @@ component TicTacToeTile inherits Rectangle {
     in-out property <bool> machine_clicked;
     in-out property <bool> empty;
     in-out property <brush> win_color;
-
     callback human_selected(int);
-
-    Rectangle {        
+    Rectangle {
         background: root.win_color;
         Image {
-            visible: root.human_clicked;
+            visible: !root.empty && root.human_clicked;
             source: root.human_icon;
             width: parent.width - 16px;
             height: parent.height - 16px;
             x: parent.x + 10px;
             y: parent.y + 10px;
         }
+
         Image {
-            visible: root.machine_clicked;
+            visible: !root.empty && root.machine_clicked;
             source: root.machine_icon;
             width: parent.width - 16px;
             height: parent.height - 16px;
             x: parent.x + 10px;
             y: parent.y + 10px;
         }
+
         TouchArea {
             clicked => {
-                if (empty) {
+                //if (empty) {
                     root.human_selected(id);
-                }                
+                //}
             }
             width: 100%;
             height: 100%;
@@ -55,14 +54,13 @@ export component AppWindow inherits Window {
     private property <int> column-count: 3;
     private property <image> human_icon: @image-url("icons/o.png");
     private property <image> machine_icon: @image-url("icons/x.png");
-
     callback process(int);
-
+    callback restart_game();
+    callback exit();
     width: (root.column-count * root.tile-size) + ((root.column-count + 1) * root.tile-spacing);
-    height: (root.row-count * root.tile-size) + ((root.row-count + 1) * root.tile-spacing);
+    height: (root.row-count * root.tile-size) + ((root.row-count + 1) * root.tile-spacing) + 60px;
     title: "Tic-Tac-Toe Game";
-
-    in-out property <[TileData]> ttt_tiles : [
+    in-out property <[TileData]> ttt_tiles: [
         {
             id: 0,
             win_color: Colors.yellow,
@@ -105,7 +103,7 @@ export component AppWindow inherits Window {
             machine_clicked: false,
             empty: true
         },
-        { 
+        {
             id: 6,
             win_color: Colors.yellow,
             human_clicked: false,
@@ -127,10 +125,11 @@ export component AppWindow inherits Window {
             empty: true
         }
     ];
-
-    for tile[i] in ttt_tiles : TicTacToeTile {
+    for tile[i] in ttt_tiles: TicTacToeTile {
         human_selected(id) => {
-            process(id);
+            if (tile.empty) {
+                process(id);
+            }            
         }
         id: i;
         x: root.tile-spacing + mod(i, root.column-count) * (root.tile-size + root.tile-spacing);
@@ -139,13 +138,40 @@ export component AppWindow inherits Window {
         height: root.tile-size;
         human_icon: root.human_icon;
         machine_icon: root.machine_icon;
-
         human_clicked: tile.human_clicked;
         machine_clicked: tile.machine_clicked;
         empty: tile.empty;
         win_color: tile.win-color;
     }
+    Rectangle {
+        padding: 10px;
+        x: root.x;
+        y: 340px;
+        width: root.width - 10px;
+        height: root.height - 10px;
+        GridLayout {
+            padding-left: 10px;
+            Row {
+                Button {
+                    width: 100px;
+                    height: 40px;
+                    text: "Restart";
+                    primary: true;
+                    clicked => {
+                        restart_game()
+                    }
+                }
 
+                Button {
+                    width: 100px;
+                    height: 40px;
+                    padding-left: 10px;
+                    text: "Exit";
+                    clicked => {
+                        exit()
+                    }
+                }
+            }
+        }
+    }
 }
-
-

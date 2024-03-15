@@ -13,7 +13,7 @@ log = "0.4.21"
 petgraph = "0.6.4"
 petgraph-evcxr = "0.2.0"
 rand = "0.8.5"
-slint = "1.4"
+slint = "1.5"
 
 [build-dependencies]
-slint-build = "1.4"
+slint-build = "1.5"

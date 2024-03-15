@@ -442,3 +442,28 @@ pub fn has_winner(tiles_model: &Rc<VecModel<TileData>>) -> bool {
     }
     false
 }
+
+pub fn random_machine_start(tiles_model: &Rc<VecModel<TileData>>) {
+    // Where does Machine start the game? Middle or top LHS ?
+    let mut rng = rand::thread_rng();
+    let middle_or_top_right = rng.gen_range(0..2);
+    if middle_or_top_right == 1 {
+        for (_i, mut tile_data) in tiles_model.iter().enumerate() {
+            if tile_data.id == 4 {
+                tile_data.machine_clicked = true;
+                tile_data.empty = false;
+                tiles_model.set_row_data(_i, tile_data);
+                break;
+            }
+        }
+    } else {
+        for (_i, mut tile_data) in tiles_model.iter().enumerate() {
+            if tile_data.id == 0 {
+                tile_data.machine_clicked = true;
+                tile_data.empty = false;
+                tiles_model.set_row_data(_i, tile_data);
+                break;
+            }
+        }
+    }
+}
