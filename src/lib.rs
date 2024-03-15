@@ -1,17 +1,19 @@
 use log::{info, warn};
-use petgraph::algo::tred;
 use petgraph::csr::IndexType;
 use petgraph::graph::Neighbors;
 use petgraph::prelude::NodeIndex;
 use petgraph::visit::Bfs;
 use rand::prelude::ThreadRng;
 use rand::Rng;
-use slint::{Model, VecModel};
+use slint::{Brush, Color, Model, VecModel};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::rc::Rc;
 use wingraph::WinGraph;
 mod wingraph;
+
+const HUMAN_WIN_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(0, 140, 0));
+const MACHINE_WIN_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(140, 0, 0));
 
 slint::include_modules!();
 
@@ -46,7 +48,7 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
     let steps_map: HashMap<&str, Vec<Tile>> = WinGraph::init_steps_map();
     let graph = WinGraph::build_graph();
     let mut founded_key: Option<&str> = None;
-    let mut next_state = None;
+    let mut next_state: Option<&str> = None;
     let mut rng: ThreadRng = rand::thread_rng();
 
     for entry in steps_map.clone() {
@@ -81,37 +83,7 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
                         break;
                     }
                 }
-                None => {
-                    let empty_tile_ids = tiles_model
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, tile)| tile.empty == true)
-                        .map(|(_, tile_data)| tile_data.id)
-                        .collect::<Vec<i32>>();
-                    info!("empty_tile_ids: {:?}", empty_tile_ids);
-
-                    if empty_tile_ids.is_empty() {
-                        break;
-                    }
-                    let rnd_tile_idx = rng.gen_range(0..empty_tile_ids.len());
-                    info!("rnd_tile_idx: {:?}", rnd_tile_idx);
-                    let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();
-                    info!("rnd_tile_id: {:?}", rnd_tile_id);
-
-                    let empty_tiles = tiles_model
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, tile)| tile.empty == true);
-
-                    tiles_model.iter().enumerate().for_each(|(_i, mut tile_data)| {
-                        if tile_data.id == *rnd_tile_id && tile_data.empty == true {
-                            tile_data.machine_clicked = true;
-                            tile_data.empty = false;
-                            tiles_model.set_row_data(_i, tile_data);
-                        }
-                    });
-                    break;
-                }
+                None => (),
             }
         }
     }
@@ -124,8 +96,39 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
             return result.unwrap().to_owned();
         }
         None => {
-            warn!("State not found");
-            return build_steps_from_model(&tiles_model);
+            warn!("State not found, machine will random step");
+            let empty_tile_ids = tiles_model
+                .iter()
+                .enumerate()
+                .filter(|(_, tile)| tile.empty == true)
+                .map(|(_, tile_data)| tile_data.id)
+                .collect::<Vec<i32>>();
+            info!("empty_tile_ids: {:?}", empty_tile_ids);
+
+            if empty_tile_ids.is_empty() {
+                return Vec::new();
+            }
+            let rnd_tile_idx = rng.gen_range(0..empty_tile_ids.len());
+            info!("rnd_tile_idx: {:?}", rnd_tile_idx);
+            let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();
+            info!("rnd_tile_id: {:?}", rnd_tile_id);
+
+            for (_i, mut tile_data) in tiles_model.iter().enumerate() {
+                if tile_data.id == *rnd_tile_id && tile_data.empty == true {
+                    tile_data.machine_clicked = true;
+                    tile_data.empty = false;
+                    tiles_model.set_row_data(_i, tile_data);
+                    break;
+                }
+            }
+            let next_step = build_steps_from_model(&tiles_model);
+            for entry in steps_map.clone() {
+                if vec_tile_compare(&entry.1, &next_step) {
+                    info!("Founded {:?}", &entry.0);
+                    return steps_map.get(&entry.0).unwrap().to_vec();
+                }
+            }
+            Vec::new()
         }
     }
 }
@@ -401,4 +404,41 @@ pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> V
     }
 
     Vec::new()
+}
+
+pub fn has_winner(tiles_model: &Rc<VecModel<TileData>>) -> bool {
+    let win_combo = get_win_combos(&tiles_model, Player::Machine);
+    if !win_combo.is_empty() {
+        tiles_model
+            .iter()
+            .enumerate()
+            .for_each(|(_i, mut tile_data)| {
+                if win_combo.contains(&tile_data.id)
+                    && tile_data.machine_clicked == true
+                    && tile_data.empty == false
+                {
+                    tile_data.win_color = MACHINE_WIN_COLOR;
+                    tiles_model.set_row_data(_i, tile_data);
+                }
+            });
+        return true;
+    } else {
+        let win_combo = get_win_combos(&tiles_model, Player::Human);
+        if !win_combo.is_empty() {
+            tiles_model
+                .iter()
+                .enumerate()
+                .for_each(|(_i, mut tile_data)| {
+                    if win_combo.contains(&tile_data.id)
+                        && tile_data.human_clicked == true
+                        && tile_data.empty == false
+                    {
+                        tile_data.win_color = HUMAN_WIN_COLOR;
+                        tiles_model.set_row_data(_i, tile_data);
+                    }
+                });
+            return true;
+        }
+    }
+    false
 }

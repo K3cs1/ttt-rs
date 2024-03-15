@@ -18,7 +18,7 @@ component TicTacToeTile inherits Rectangle {
 
     callback human_selected(int);
 
-    Rectangle {
+    Rectangle {        
         background: root.win_color;
         Image {
             visible: root.human_clicked;
@@ -36,9 +36,11 @@ component TicTacToeTile inherits Rectangle {
             x: parent.x + 10px;
             y: parent.y + 10px;
         }
-        TouchArea {            
+        TouchArea {
             clicked => {
-                root.human_selected(id);
+                if (empty) {
+                    root.human_selected(id);
+                }                
             }
             width: 100%;
             height: 100%;
