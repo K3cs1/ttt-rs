@@ -5,7 +5,7 @@ use petgraph::prelude::NodeIndex;
 use petgraph::visit::Bfs;
 use rand::prelude::ThreadRng;
 use rand::Rng;
-use slint::{Brush, Color, Model, VecModel};
+use slint::{Brush, Color, Model, SharedString, VecModel};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::rc::Rc;
@@ -43,8 +43,11 @@ impl Tile {
     }
 }
 
-pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
-    let actual_state: Vec<Tile> = build_steps_from_model(&tiles_model);
+pub fn search_next_step(
+    tiles_model: &Rc<VecModel<TileData>>,
+    sequence_model: &Rc<VecModel<Sequence>>,
+) -> Vec<Tile> {
+    let actual_state: Vec<Tile> = build_steps_from_model(&sequence_model);
     let steps_map: HashMap<&str, Vec<Tile>> = WinGraph::init_steps_map();
     let graph = WinGraph::build_graph();
     let mut founded_key: Option<&str> = None;
@@ -100,7 +103,11 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
             let empty_tile_ids = tiles_model
                 .iter()
                 .enumerate()
-                .filter(|(_, tile)| tile.empty == true)
+                .filter(|(_, tile)| {
+                    tile.empty == true
+                        && tile.machine_clicked == false
+                        && tile.human_clicked == false
+                })
                 .map(|(_, tile_data)| tile_data.id)
                 .collect::<Vec<i32>>();
             info!("empty_tile_ids: {:?}", empty_tile_ids);
@@ -121,25 +128,44 @@ pub fn search_next_step(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
                     break;
                 }
             }
-            let next_step = build_steps_from_model(&tiles_model);
+
+            let mut has_not_stepped = true;
+            for seq in sequence_model.iter() {
+                if seq.player == "M" && seq.id == *rnd_tile_id {
+                    has_not_stepped = false;
+                    break;
+                }
+            }
+            if has_not_stepped {
+                sequence_model.insert(
+                    sequence_model.row_count(),
+                    Sequence {
+                        id: *rnd_tile_id,
+                        player: SharedString::from("M"),
+                    },
+                );
+            }
+
+            let next_step = build_steps_from_model(&sequence_model);
             for entry in steps_map.clone() {
                 if vec_tile_compare(&entry.1, &next_step) {
-                    info!("Founded {:?}", &entry.0);
+                    info!("Founded next step {:?}", &entry.0);
                     return steps_map.get(&entry.0).unwrap().to_vec();
                 }
             }
-            Vec::new()
+            next_step
         }
     }
 }
 
-fn build_steps_from_model(tiles_model: &Rc<VecModel<TileData>>) -> Vec<Tile> {
+fn build_steps_from_model(sequence_model: &Rc<VecModel<Sequence>>) -> Vec<Tile> {
     let mut steps: Vec<Tile> = Vec::new();
-    for (_i, tile_data) in tiles_model.iter().enumerate() {
-        if tile_data.human_clicked == true && tile_data.empty == false {
-            steps.push(Tile::new(tile_data.id, Player::Human));
-        } else if tile_data.machine_clicked == true && tile_data.empty == false {
-            steps.push(Tile::new(tile_data.id, Player::Machine));
+
+    for (_i, sequence_data) in sequence_model.iter().enumerate() {
+        if sequence_data.player == "H" {
+            steps.insert(_i, Tile::new(sequence_data.id, Player::Human));
+        } else if sequence_data.player == "M" {
+            steps.insert(_i, Tile::new(sequence_data.id, Player::Machine));
         }
     }
     info!("build_steps_from_model steps: {:?}", &steps);
@@ -443,7 +469,10 @@ pub fn has_winner(tiles_model: &Rc<VecModel<TileData>>) -> bool {
     false
 }
 
-pub fn random_machine_start(tiles_model: &Rc<VecModel<TileData>>) {
+pub fn random_machine_start(
+    tiles_model: &Rc<VecModel<TileData>>,
+    sequence_model: &Rc<VecModel<Sequence>>,
+) {
     // Where does Machine start the game? Middle or top LHS ?
     let mut rng = rand::thread_rng();
     let middle_or_top_right = rng.gen_range(0..2);
@@ -456,6 +485,13 @@ pub fn random_machine_start(tiles_model: &Rc<VecModel<TileData>>) {
                 break;
             }
         }
+        sequence_model.insert(
+            0,
+            Sequence {
+                id: 4,
+                player: SharedString::from("M"),
+            },
+        )
     } else {
         for (_i, mut tile_data) in tiles_model.iter().enumerate() {
             if tile_data.id == 0 {
@@ -465,5 +501,12 @@ pub fn random_machine_start(tiles_model: &Rc<VecModel<TileData>>) {
                 break;
             }
         }
+        sequence_model.insert(
+            0,
+            Sequence {
+                id: 0,
+                player: SharedString::from("M"),
+            },
+        )
     }
 }

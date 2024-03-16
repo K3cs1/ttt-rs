@@ -1,11 +1,16 @@
 import { Button, VerticalBox, GridBox } from "std-widgets.slint";
 
+struct Sequence {
+    id: int,
+    player: string}
+
 struct TileData {
     id: int,
     win_color: brush,
     human_clicked: bool,
     machine_clicked: bool,
     empty: bool}
+
 component TicTacToeTile inherits Rectangle {
     in property <int> id;
     in property <image> human_icon;
@@ -37,9 +42,7 @@ component TicTacToeTile inherits Rectangle {
 
         TouchArea {
             clicked => {
-                //if (empty) {
-                    root.human_selected(id);
-                //}
+                root.human_selected(id);
             }
             width: 100%;
             height: 100%;
@@ -125,11 +128,12 @@ export component AppWindow inherits Window {
             empty: true
         }
     ];
+    in-out property <[Sequence]> sequence: [];
     for tile[i] in ttt_tiles: TicTacToeTile {
         human_selected(id) => {
             if (tile.empty) {
                 process(id);
-            }            
+            }
         }
         id: i;
         x: root.tile-spacing + mod(i, root.column-count) * (root.tile-size + root.tile-spacing);
