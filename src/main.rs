@@ -62,17 +62,18 @@ fn main() {
                 }
             }
             ui.set_sequence(sequence_model.clone().into());
+            ui.set_ttt_tiles(tiles_model.clone().into());
 
             if has_winner(&tiles_model) {
                 info!("Has winner!");
             } else {
                 //Machine turn
-                let founded_state_vec = search_next_step(&tiles_model, &sequence_model);
+                let mut founded_state_vec: Vec<ttt_rs::Tile> =
+                    search_next_step(&tiles_model, &sequence_model);
+                warn!("founded_state_vec: {:?}", founded_state_vec);
                 ui.set_sequence(sequence_model.clone().into());
                 if !founded_state_vec.is_empty() {
-                    let machine_next_tile = founded_state_vec.get(founded_state_vec.len() - 1);
-                    let ttt_tiles: Vec<TileData> = ui.get_ttt_tiles().iter().collect();
-                    let tiles_model: Rc<VecModel<TileData>> = Rc::new(VecModel::from(ttt_tiles));
+                    let machine_next_tile: Option<ttt_rs::Tile> = founded_state_vec.pop();
                     match machine_next_tile {
                         Some(mn_tile) => {
                             for (_i, mut tile_data) in tiles_model.iter().enumerate() {
@@ -80,9 +81,16 @@ fn main() {
                                     tile_data.machine_clicked = true;
                                     tile_data.empty = false;
                                     tiles_model.set_row_data(_i, tile_data);
+                                    warn!("Machine step id: {:?}", mn_tile.field_id);
+                                    sequence_model.push(Sequence {
+                                        id: mn_tile.field_id,
+                                        player: SharedString::from("M"),
+                                    });
                                     break;
                                 }
                             }
+                            ui.set_ttt_tiles(tiles_model.clone().into());
+                            ui.set_sequence(sequence_model.clone().into());
                         }
                         None => {
                             warn!("Machine next tile not found!");

@@ -47,7 +47,7 @@ pub fn search_next_step(
     tiles_model: &Rc<VecModel<TileData>>,
     sequence_model: &Rc<VecModel<Sequence>>,
 ) -> Vec<Tile> {
-    let actual_state: Vec<Tile> = build_steps_from_model(&sequence_model);
+    let mut actual_state: Vec<Tile> = build_steps_from_model(&sequence_model);
     let steps_map: HashMap<&str, Vec<Tile>> = WinGraph::init_steps_map();
     let graph = WinGraph::build_graph();
     let mut founded_key: Option<&str> = None;
@@ -120,40 +120,43 @@ pub fn search_next_step(
             let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();
             info!("rnd_tile_id: {:?}", rnd_tile_id);
 
-            for (_i, mut tile_data) in tiles_model.iter().enumerate() {
-                if tile_data.id == *rnd_tile_id && tile_data.empty == true {
-                    tile_data.machine_clicked = true;
-                    tile_data.empty = false;
-                    tiles_model.set_row_data(_i, tile_data);
-                    break;
-                }
-            }
+            actual_state.push(Tile::new(*rnd_tile_id, Player::Machine));
 
-            let mut has_not_stepped = true;
-            for seq in sequence_model.iter() {
-                if seq.player == "M" && seq.id == *rnd_tile_id {
-                    has_not_stepped = false;
-                    break;
-                }
-            }
-            if has_not_stepped {
-                sequence_model.insert(
-                    sequence_model.row_count(),
-                    Sequence {
-                        id: *rnd_tile_id,
-                        player: SharedString::from("M"),
-                    },
-                );
-            }
+            // for (_i, mut tile_data) in tiles_model.iter().enumerate() {
+            //     if tile_data.id == *rnd_tile_id && tile_data.empty == true {
+            //         tile_data.machine_clicked = true;
+            //         tile_data.empty = false;
+            //         actual_state.push(Tile::new(tile_data.id, Player::Machine));
+            //         tiles_model.set_row_data(_i, tile_data);
+            //         break;
+            //     }
+            // }
 
-            let next_step = build_steps_from_model(&sequence_model);
+            // let mut has_not_stepped = true;
+            // for seq in sequence_model.iter() {
+            //     if seq.player == "M" && seq.id == *rnd_tile_id {
+            //         has_not_stepped = false;
+            //         break;
+            //     }
+            // }
+            // if has_not_stepped {
+            //     sequence_model.insert(
+            //         sequence_model.row_count(),
+            //         Sequence {
+            //             id: *rnd_tile_id,
+            //             player: SharedString::from("M"),
+            //         },
+            //     );
+            // }
+
+            //let next_step = build_steps_from_model(&sequence_model);
             for entry in steps_map.clone() {
-                if vec_tile_compare(&entry.1, &next_step) {
+                if vec_tile_compare(&entry.1, &actual_state) {
                     info!("Founded next step {:?}", &entry.0);
                     return steps_map.get(&entry.0).unwrap().to_vec();
                 }
             }
-            next_step
+            actual_state
         }
     }
 }
@@ -163,9 +166,9 @@ fn build_steps_from_model(sequence_model: &Rc<VecModel<Sequence>>) -> Vec<Tile> 
 
     for (_i, sequence_data) in sequence_model.iter().enumerate() {
         if sequence_data.player == "H" {
-            steps.insert(_i, Tile::new(sequence_data.id, Player::Human));
+            steps.push(Tile::new(sequence_data.id, Player::Human));
         } else if sequence_data.player == "M" {
-            steps.insert(_i, Tile::new(sequence_data.id, Player::Machine));
+            steps.push(Tile::new(sequence_data.id, Player::Machine));
         }
     }
     info!("build_steps_from_model steps: {:?}", &steps);
