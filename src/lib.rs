@@ -122,34 +122,6 @@ pub fn search_next_step(
 
             actual_state.push(Tile::new(*rnd_tile_id, Player::Machine));
 
-            // for (_i, mut tile_data) in tiles_model.iter().enumerate() {
-            //     if tile_data.id == *rnd_tile_id && tile_data.empty == true {
-            //         tile_data.machine_clicked = true;
-            //         tile_data.empty = false;
-            //         actual_state.push(Tile::new(tile_data.id, Player::Machine));
-            //         tiles_model.set_row_data(_i, tile_data);
-            //         break;
-            //     }
-            // }
-
-            // let mut has_not_stepped = true;
-            // for seq in sequence_model.iter() {
-            //     if seq.player == "M" && seq.id == *rnd_tile_id {
-            //         has_not_stepped = false;
-            //         break;
-            //     }
-            // }
-            // if has_not_stepped {
-            //     sequence_model.insert(
-            //         sequence_model.row_count(),
-            //         Sequence {
-            //             id: *rnd_tile_id,
-            //             player: SharedString::from("M"),
-            //         },
-            //     );
-            // }
-
-            //let next_step = build_steps_from_model(&sequence_model);
             for entry in steps_map.clone() {
                 if vec_tile_compare(&entry.1, &actual_state) {
                     info!("Founded next step {:?}", &entry.0);
