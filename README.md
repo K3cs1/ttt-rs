@@ -1,6 +1,6 @@
 # Tic-Tac-Toe Game Rust
 
-1. Build with cargo
+1. Install CLI tool
     ```
     cargo install cargo-generate
     ```
