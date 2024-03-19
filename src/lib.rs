@@ -1,4 +1,4 @@
-use log::{info, warn};
+use log::trace;
 use petgraph::csr::IndexType;
 use petgraph::graph::Neighbors;
 use petgraph::prelude::NodeIndex;
@@ -47,6 +47,10 @@ pub fn search_next_step(
     tiles_model: &Rc<VecModel<TileData>>,
     sequence_model: &Rc<VecModel<Sequence>>,
 ) -> Vec<Tile> {
+    trace!(
+        "Size of sequence_model: {:?}",
+        sequence_model.iter().count()
+    );
     let mut actual_state: Vec<Tile> = build_steps_from_model(&sequence_model);
     let steps_map: HashMap<&str, Vec<Tile>> = WinGraph::init_steps_map();
     let graph = WinGraph::build_graph();
@@ -57,7 +61,7 @@ pub fn search_next_step(
     for entry in steps_map.clone() {
         if vec_tile_compare(&entry.1, &actual_state) {
             founded_key = Some(entry.0);
-            info!("Founded {:?}", founded_key);
+            trace!("Founded {:?}", founded_key);
             break;
         }
     }
@@ -72,15 +76,15 @@ pub fn search_next_step(
                         let neighbours: Neighbors<'_, &str> = graph.neighbors(nx);
 
                         let count: usize = neighbours.clone().count();
-                        info!("Count: {}", count);
+                        trace!("Count: {}", count);
                         let mut neighbour_index: usize = 0;
                         if count >= 1 {
                             neighbour_index = rng.gen_range(0..count + 1);
                         }
-                        info!("Random neighbour_index: {:?}", neighbour_index);
+                        trace!("Random neighbour_index: {:?}", neighbour_index);
 
                         neighbours.for_each(|nb_node_index: NodeIndex| {
-                            info!("next_node_index: {:?}", neighbour_index.index());
+                            trace!("next_node_index: {:?}", neighbour_index.index());
                             next_state = Some(graph[nb_node_index]);
                         });
                         break;
@@ -93,13 +97,13 @@ pub fn search_next_step(
 
     match next_state {
         Some(key) => {
-            info!("Next state key: {:?}", key);
+            trace!("Next state key: {:?}", key);
             let hash_map = steps_map.clone();
             let result = &hash_map.get(key);
             return result.unwrap().to_owned();
         }
         None => {
-            warn!("State not found, machine will random step");
+            trace!("State not found, machine will random step");
             let empty_tile_ids = tiles_model
                 .iter()
                 .enumerate()
@@ -110,21 +114,20 @@ pub fn search_next_step(
                 })
                 .map(|(_, tile_data)| tile_data.id)
                 .collect::<Vec<i32>>();
-            info!("empty_tile_ids: {:?}", empty_tile_ids);
+            trace!("empty_tile_ids: {:?}", empty_tile_ids);
 
             if empty_tile_ids.is_empty() {
                 return Vec::new();
             }
             let rnd_tile_idx = rng.gen_range(0..empty_tile_ids.len());
-            info!("rnd_tile_idx: {:?}", rnd_tile_idx);
             let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();
-            info!("rnd_tile_id: {:?}", rnd_tile_id);
+            trace!("rnd_tile_id: {:?}", rnd_tile_id);
 
             actual_state.push(Tile::new(*rnd_tile_id, Player::Machine));
 
             for entry in steps_map.clone() {
                 if vec_tile_compare(&entry.1, &actual_state) {
-                    info!("Founded next step {:?}", &entry.0);
+                    trace!("Founded next step {:?}", &entry.0);
                     return steps_map.get(&entry.0).unwrap().to_vec();
                 }
             }
@@ -143,7 +146,7 @@ fn build_steps_from_model(sequence_model: &Rc<VecModel<Sequence>>) -> Vec<Tile> 
             steps.push(Tile::new(sequence_data.id, Player::Machine));
         }
     }
-    info!("build_steps_from_model steps: {:?}", &steps);
+    trace!("build_steps_from_model steps: {:?}", &steps);
     steps
 }
 
@@ -448,6 +451,10 @@ pub fn random_machine_start(
     tiles_model: &Rc<VecModel<TileData>>,
     sequence_model: &Rc<VecModel<Sequence>>,
 ) {
+    for (_i, _sequence_data) in sequence_model.iter().enumerate() {
+        sequence_model.remove(_i);
+    }
+
     // Where does Machine start the game? Middle or top LHS ?
     let mut rng = rand::thread_rng();
     let middle_or_top_right = rng.gen_range(0..2);
