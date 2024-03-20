@@ -810,6 +810,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "console_error_panic_hook"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06aeb73f470f66dcdbf7223caeebb85984942f22f1adb2a088cf9668146bbbc"
+dependencies = [
+ "cfg-if",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "const-field-offset"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3814,6 +3824,7 @@ checksum = "17f77d76d837a7830fe1d4f12b7b4ba4192c1888001c7164257e4bc6d21d96b4"
 name = "ttt-rs"
 version = "0.1.0"
 dependencies = [
+ "console_error_panic_hook",
  "env_logger",
  "getrandom",
  "log",
@@ -3823,6 +3834,7 @@ dependencies = [
  "slint",
  "slint-build",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

@@ -6,12 +6,17 @@ use slint::{Brush, Color, ComponentHandle, SharedString};
 use slint::{Model, ModelNotify, VecModel};
 use std::process::exit;
 use std::rc::Rc;
+use std::panic;
+
+// #[cfg(target_arch = "wasm32")]
+// use wasm_bindgen::prelude::*;
 
 const DEFAULT_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(255, 255, 0));
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen(start))]
 fn main() {
-    std::env::set_var("RUST_LOG", "trace");
+    panic::set_hook(Box::new(console_error_panic_hook::hook));
+    //std::env::set_var("RUST_LOG", "trace");
     env_logger::init();
 
     let ui = AppWindow::new().unwrap();
