@@ -1,14 +1,15 @@
+mod game_logic;
+mod win_graph;
+use game_logic::{AppWindow, GameLogic, Sequence, Tile, TileData};
 use log::{info, trace};
 use slint::{Brush, Color, ComponentHandle, SharedString};
 use slint::{Model, ModelNotify, VecModel};
 use std::process::exit;
 use std::rc::Rc;
-use ttt_rs::{has_winner, search_next_step};
-use ttt_rs::{random_machine_start, AppWindow};
-use ttt_rs::{Sequence, TileData};
 
 const DEFAULT_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(255, 255, 0));
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen(start))]
 fn main() {
     std::env::set_var("RUST_LOG", "trace");
     env_logger::init();
@@ -24,7 +25,7 @@ fn main() {
     let sequence: Vec<Sequence> = ui.get_sequence().iter().collect();
     let sequence_model: Rc<VecModel<Sequence>> = Rc::new(VecModel::from(sequence));
 
-    random_machine_start(&tiles_model, &sequence_model);
+    GameLogic::random_machine_start(&tiles_model, &sequence_model);
 
     ui.set_ttt_tiles(tiles_model.clone().into());
 
@@ -39,7 +40,7 @@ fn main() {
 
         let tiles_model: Rc<VecModel<TileData>> = Rc::new(VecModel::from(ttt_tiles));
 
-        if has_winner(&tiles_model) {
+        if GameLogic::has_winner(&tiles_model) {
             trace!("Has winner!");
         } else {
             //Human turn
@@ -57,16 +58,16 @@ fn main() {
             }
             ui.set_ttt_tiles(tiles_model.clone().into());
 
-            if has_winner(&tiles_model) {
+            if GameLogic::has_winner(&tiles_model) {
                 trace!("Has winner!");
             } else {
                 //Machine turn
-                let mut founded_state_vec: Vec<ttt_rs::Tile> =
-                    search_next_step(&tiles_model, &sequence_model);
+                let mut founded_state_vec: Vec<Tile> =
+                    GameLogic::search_next_step(&tiles_model, &sequence_model);
                 info!("founded_state_vec: {:?}", founded_state_vec);
                 ui.set_sequence(sequence_model.clone().into());
                 if !founded_state_vec.is_empty() {
-                    let machine_next_tile: Option<ttt_rs::Tile> = founded_state_vec.pop();
+                    let machine_next_tile: Option<Tile> = founded_state_vec.pop();
                     match machine_next_tile {
                         Some(mn_tile) => {
                             for (_i, mut tile_data) in tiles_model.iter().enumerate() {
@@ -94,7 +95,7 @@ fn main() {
                     }
                 }
 
-                if has_winner(&tiles_model) {
+                if GameLogic::has_winner(&tiles_model) {
                     trace!("Has winner!");
                 }
             }
@@ -132,7 +133,7 @@ fn main() {
 
         let sequence_model: Rc<VecModel<Sequence>> = Rc::new(VecModel::from(sequence));
 
-        random_machine_start(&tiles_model, &sequence_model);
+        GameLogic::random_machine_start(&tiles_model, &sequence_model);
 
         info!(
             "Size of sequence_model in restart: {:?}",

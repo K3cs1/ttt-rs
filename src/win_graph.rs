@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-
 use petgraph::Graph;
 
-use crate::{Player, Tile};
+use crate::{game_logic::Player, game_logic::Tile};
 
 pub struct WinGraph {}
 
