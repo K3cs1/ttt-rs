@@ -1,10 +1,10 @@
 # Tic-Tac-Toe Game Rust
 
-1. Install CLI tool
+1. Install the CLI tool
     ```
     cargo install cargo-generate
     ```
-2. Install WebAssembly CLI tool
+2. Install the WebAssembly CLI tool
     ```
     cargo install wasm-pack
     ```
@@ -20,10 +20,12 @@
      ```     
      wasm-pack build --release --target web
      ```
-6. To access the web wersion
+6. To access the web version
      ```     
      python3 -m http.server
      ```
-Than Web wersion can be access:
+The Web version can be accessed:
 http://localhost:8000
 
+Or here:
+https://d17lzqqtmm6hs0.cloudfront.net
