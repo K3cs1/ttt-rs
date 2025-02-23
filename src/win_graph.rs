@@ -1,600 +1,561 @@
-use std::collections::HashMap;
+use crate::game_logic::{Player, Tile};
 use petgraph::Graph;
-
-use crate::{game_logic::Player, game_logic::Tile};
+use std::collections::HashMap;
 
 pub struct WinGraph {}
 
 impl WinGraph {
     pub fn init_steps_map() -> HashMap<&'static str, Vec<Tile>> {
-        let mut steps_map = HashMap::new();
-        steps_map.insert("0_0", Vec::from([Tile::init()]));
-        steps_map.insert("1_0", Vec::from([Tile::new(4, Player::Machine)]));
-        steps_map.insert("1_1", Vec::from([Tile::new(0, Player::Machine)]));
-        steps_map.insert(
-            "2_0",
-            Vec::from([Tile::new(4, Player::Machine), Tile::new(1, Player::Human)]),
-        );
-        steps_map.insert(
-            "2_1",
-            Vec::from([Tile::new(4, Player::Machine), Tile::new(0, Player::Human)]),
-        );
-        steps_map.insert(
-            "2_2",
-            Vec::from([Tile::new(0, Player::Machine), Tile::new(1, Player::Human)]),
-        );
-        steps_map.insert(
-            "2_3",
-            Vec::from([Tile::new(0, Player::Machine), Tile::new(2, Player::Human)]),
-        );
-        steps_map.insert(
-            "2_4",
-            Vec::from([Tile::new(0, Player::Machine), Tile::new(4, Player::Human)]),
-        );
-        steps_map.insert(
-            "3_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "3_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "3_2",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "3_3",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "4_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(0, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(2, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_2",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(3, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_3",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_4",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(3, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_5",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(1, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_5",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(1, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_6",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "4_7",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(6, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "5_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(0, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_2",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(6, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_3",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_4",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(8, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_5",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(3, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_6",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "5_7",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(2, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "6_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(0, Player::Machine),
-                Tile::new(8, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "6_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(5, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "6_2",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(7, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "6_3",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(7, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "6_4",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(2, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "6_5",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(6, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "6_6",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(1, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "7_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(0, Player::Machine),
-                Tile::new(8, Player::Human),
-                Tile::new(3, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "7_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(5, Player::Human),
-                Tile::new(1, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "7_2",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(7, Player::Human),
-                Tile::new(5, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "7_3",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(7, Player::Human),
-                Tile::new(4, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "7_4",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "7_5",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(2, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "7_6",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(5, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "8_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(5, Player::Human),
-                Tile::new(1, Player::Machine),
-                Tile::new(8, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "8_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(5, Player::Human),
-                Tile::new(1, Player::Machine),
-                Tile::new(7, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "8_2",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(1, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "8_3",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(7, Player::Human),
-            ]),
-        );
-        steps_map.insert(
-            "9_0",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(5, Player::Human),
-                Tile::new(1, Player::Machine),
-                Tile::new(8, Player::Human),
-                Tile::new(7, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "9_1",
-            Vec::from([
-                Tile::new(4, Player::Machine),
-                Tile::new(0, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(3, Player::Machine),
-                Tile::new(5, Player::Human),
-                Tile::new(1, Player::Machine),
-                Tile::new(7, Player::Human),
-                Tile::new(8, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "9_2",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(6, Player::Human),
-                Tile::new(2, Player::Machine),
-                Tile::new(1, Player::Human),
-                Tile::new(7, Player::Machine),
-            ]),
-        );
-        steps_map.insert(
-            "9_3",
-            Vec::from([
-                Tile::new(0, Player::Machine),
-                Tile::new(4, Player::Human),
-                Tile::new(8, Player::Machine),
-                Tile::new(3, Player::Human),
-                Tile::new(5, Player::Machine),
-                Tile::new(2, Player::Human),
-                Tile::new(6, Player::Machine),
-                Tile::new(7, Player::Human),
-                Tile::new(1, Player::Machine),
-            ]),
-        );
+        // Define a static slice of key and tile-array pairs.
+        // (Note: duplicate keys have been removed.)
+        let entries: &[(&'static str, &[Tile])] = &[
+            ("0_0", &[Tile::init()]),
+            ("1_0", &[Tile::new(4, Player::Machine)]),
+            ("1_1", &[Tile::new(0, Player::Machine)]),
+            (
+                "2_0",
+                &[Tile::new(4, Player::Machine), Tile::new(1, Player::Human)],
+            ),
+            (
+                "2_1",
+                &[Tile::new(4, Player::Machine), Tile::new(0, Player::Human)],
+            ),
+            (
+                "2_2",
+                &[Tile::new(0, Player::Machine), Tile::new(1, Player::Human)],
+            ),
+            (
+                "2_3",
+                &[Tile::new(0, Player::Machine), Tile::new(2, Player::Human)],
+            ),
+            (
+                "2_4",
+                &[Tile::new(0, Player::Machine), Tile::new(4, Player::Human)],
+            ),
+            (
+                "3_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                ],
+            ),
+            (
+                "3_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                ],
+            ),
+            (
+                "3_2",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                ],
+            ),
+            (
+                "3_3",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                ],
+            ),
+            (
+                "4_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(0, Player::Human),
+                ],
+            ),
+            (
+                "4_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(2, Player::Human),
+                ],
+            ),
+            (
+                "4_2",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(3, Player::Human),
+                ],
+            ),
+            (
+                "4_3",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                ],
+            ),
+            (
+                "4_4",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(3, Player::Human),
+                ],
+            ),
+            (
+                "4_5",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(1, Player::Human),
+                ],
+            ),
+            (
+                "4_6",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                ],
+            ),
+            (
+                "4_7",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(6, Player::Human),
+                ],
+            ),
+            (
+                "5_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                ],
+            ),
+            (
+                "5_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(0, Player::Machine),
+                ],
+            ),
+            (
+                "5_2",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(6, Player::Machine),
+                ],
+            ),
+            (
+                "5_3",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                ],
+            ),
+            (
+                "5_4",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(8, Player::Machine),
+                ],
+            ),
+            (
+                "5_5",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(3, Player::Machine),
+                ],
+            ),
+            (
+                "5_6",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                ],
+            ),
+            (
+                "5_7",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(2, Player::Machine),
+                ],
+            ),
+            (
+                "6_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(0, Player::Machine),
+                    Tile::new(8, Player::Human),
+                ],
+            ),
+            (
+                "6_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(5, Player::Human),
+                ],
+            ),
+            (
+                "6_2",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(7, Player::Human),
+                ],
+            ),
+            (
+                "6_3",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(7, Player::Human),
+                ],
+            ),
+            (
+                "6_4",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(2, Player::Human),
+                ],
+            ),
+            (
+                "6_5",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(6, Player::Human),
+                ],
+            ),
+            (
+                "6_6",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(1, Player::Human),
+                ],
+            ),
+            (
+                "7_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(0, Player::Machine),
+                    Tile::new(8, Player::Human),
+                    Tile::new(3, Player::Machine),
+                ],
+            ),
+            (
+                "7_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(5, Player::Human),
+                    Tile::new(1, Player::Machine),
+                ],
+            ),
+            (
+                "7_2",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(7, Player::Human),
+                    Tile::new(5, Player::Machine),
+                ],
+            ),
+            (
+                "7_3",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(7, Player::Human),
+                    Tile::new(4, Player::Machine),
+                ],
+            ),
+            (
+                "7_4",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                ],
+            ),
+            (
+                "7_5",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(2, Player::Machine),
+                ],
+            ),
+            (
+                "7_6",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(5, Player::Machine),
+                ],
+            ),
+            (
+                "8_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(5, Player::Human),
+                    Tile::new(1, Player::Machine),
+                    Tile::new(8, Player::Human),
+                ],
+            ),
+            (
+                "8_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(5, Player::Human),
+                    Tile::new(1, Player::Machine),
+                    Tile::new(7, Player::Human),
+                ],
+            ),
+            (
+                "8_2",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(1, Player::Human),
+                ],
+            ),
+            (
+                "8_3",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(7, Player::Human),
+                ],
+            ),
+            (
+                "9_0",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(5, Player::Human),
+                    Tile::new(1, Player::Machine),
+                    Tile::new(8, Player::Human),
+                    Tile::new(7, Player::Machine),
+                ],
+            ),
+            (
+                "9_1",
+                &[
+                    Tile::new(4, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(5, Player::Human),
+                    Tile::new(1, Player::Machine),
+                    Tile::new(7, Player::Human),
+                    Tile::new(8, Player::Machine),
+                ],
+            ),
+            (
+                "9_2",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(6, Player::Human),
+                    Tile::new(2, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(7, Player::Machine),
+                ],
+            ),
+            (
+                "9_3",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(4, Player::Human),
+                    Tile::new(8, Player::Machine),
+                    Tile::new(3, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                    Tile::new(7, Player::Human),
+                    Tile::new(1, Player::Machine),
+                ],
+            ),
+        ];
 
+        let mut steps_map = HashMap::new();
+        for &(key, tiles) in entries {
+            steps_map.insert(key, tiles.to_vec());
+        }
         steps_map
     }
 
     pub fn build_graph() -> Graph<&'static str, &'static str> {
-        let mut graph = Graph::<&str, &str>::new();
-        let node_0_0 = graph.add_node("0_0");
-        let node_1_0 = graph.add_node("1_0");
-        let node_1_1 = graph.add_node("1_1");
-        let node_2_0 = graph.add_node("2_0");
-        let node_2_1 = graph.add_node("2_1");
-        let node_2_2 = graph.add_node("2_2");
-        let node_2_3 = graph.add_node("2_3");
-        let node_2_4 = graph.add_node("2_4");
-        let node_3_0 = graph.add_node("3_0");
-        let node_3_1 = graph.add_node("3_1");
-        let node_3_2 = graph.add_node("3_2");
-        let node_3_3 = graph.add_node("3_3");
-        let node_4_0 = graph.add_node("4_0");
-        let node_4_1 = graph.add_node("4_1");
-        let node_4_2 = graph.add_node("4_2");
-        let node_4_3 = graph.add_node("4_3");
-        let node_4_4 = graph.add_node("4_4");
-        let node_4_5 = graph.add_node("4_5");
-        let node_4_6 = graph.add_node("4_6");
-        let node_4_7 = graph.add_node("4_7");
-        let node_5_0 = graph.add_node("5_0");
-        let node_5_1 = graph.add_node("5_1");
-        let node_5_2 = graph.add_node("5_2");
-        let node_5_3 = graph.add_node("5_3");
-        let node_5_4 = graph.add_node("5_4");
-        let node_5_5 = graph.add_node("5_5");
-        let node_5_6 = graph.add_node("5_6");
-        let node_5_7 = graph.add_node("5_7");
-        let node_6_0 = graph.add_node("6_0");
-        let node_6_1 = graph.add_node("6_1");
-        let node_6_2 = graph.add_node("6_2");
-        let node_6_3 = graph.add_node("6_3");
-        let node_6_4 = graph.add_node("6_4");
-        let node_6_5 = graph.add_node("6_5");
-        let node_6_6 = graph.add_node("6_6");
-        let node_7_0 = graph.add_node("7_0");
-        let node_7_1 = graph.add_node("7_1");
-        let node_7_2 = graph.add_node("7_2");
-        let node_7_3 = graph.add_node("7_3");
-        let node_7_4 = graph.add_node("7_4");
-        let node_7_5 = graph.add_node("7_5");
-        let node_7_6 = graph.add_node("7_6");
-        let node_8_0 = graph.add_node("8_0");
-        let node_8_1 = graph.add_node("8_1");
-        let node_8_2 = graph.add_node("8_2");
-        let node_8_3 = graph.add_node("8_3");
-        let node_9_0 = graph.add_node("9_0");
-        let node_9_1 = graph.add_node("9_1");
-        let node_9_2 = graph.add_node("9_2");
-        let node_9_3 = graph.add_node("9_3");
+        let keys = [
+            "0_0", "1_0", "1_1", "2_0", "2_1", "2_2", "2_3", "2_4", "3_0", "3_1", "3_2", "3_3",
+            "4_0", "4_1", "4_2", "4_3", "4_4", "4_5", "4_6", "4_7", "5_0", "5_1", "5_2", "5_3",
+            "5_4", "5_5", "5_6", "5_7", "6_0", "6_1", "6_2", "6_3", "6_4", "6_5", "6_6", "7_0",
+            "7_1", "7_2", "7_3", "7_4", "7_5", "7_6", "8_0", "8_1", "8_2", "8_3", "9_0", "9_1",
+            "9_2", "9_3",
+        ];
+        let mut graph = Graph::<&'static str, &'static str>::new();
+        // Build a map from key to node index.
+        let nodes: HashMap<_, _> = keys.iter().map(|&k| (k, graph.add_node(k))).collect();
 
-        graph.extend_with_edges(&[
-            (node_0_0, node_1_0),
-            (node_0_0, node_1_1),
-            (node_1_0, node_2_0),
-            (node_1_0, node_2_1),
-            (node_1_1, node_2_2),
-            (node_1_1, node_2_3),
-            (node_1_1, node_2_4),
-            (node_2_0, node_3_0),
-            (node_2_1, node_3_1),
-            (node_2_3, node_3_2),
-            (node_2_4, node_3_3),
-            (node_3_0, node_4_0),
-            (node_3_0, node_4_1),
-            (node_3_1, node_4_2),
-            (node_3_1, node_4_3),
-            (node_3_2, node_4_4),
-            (node_3_2, node_4_5),
-            (node_3_3, node_4_6),
-            (node_3_3, node_4_7),
-            (node_4_0, node_5_0),
-            (node_4_1, node_5_1),
-            (node_4_2, node_5_2),
-            (node_4_3, node_5_3),
-            (node_4_4, node_5_4),
-            (node_4_5, node_5_5),
-            (node_4_6, node_5_6),
-            (node_4_7, node_5_7),
-            (node_6_0, node_7_0),
-            (node_6_1, node_7_1),
-            (node_6_2, node_7_2),
-            (node_6_3, node_7_3),
-            (node_6_4, node_7_4),
-            (node_6_5, node_7_5),
-            (node_6_6, node_7_6),
-            (node_7_1, node_8_0),
-            (node_7_1, node_8_1),
-            (node_7_4, node_8_2),
-            (node_7_4, node_8_3),
-            (node_8_0, node_9_0),
-            (node_8_1, node_9_1),
-            (node_8_2, node_9_2),
-            (node_8_3, node_9_3),
-        ]);
+        let edges = [
+            ("0_0", "1_0"),
+            ("0_0", "1_1"),
+            ("1_0", "2_0"),
+            ("1_0", "2_1"),
+            ("1_1", "2_2"),
+            ("1_1", "2_3"),
+            ("1_1", "2_4"),
+            ("2_0", "3_0"),
+            ("2_1", "3_1"),
+            ("2_3", "3_2"),
+            ("2_4", "3_3"),
+            ("3_0", "4_0"),
+            ("3_0", "4_1"),
+            ("3_1", "4_2"),
+            ("3_1", "4_3"),
+            ("3_2", "4_4"),
+            ("3_2", "4_5"),
+            ("3_3", "4_6"),
+            ("3_3", "4_7"),
+            ("4_0", "5_0"),
+            ("4_1", "5_1"),
+            ("4_2", "5_2"),
+            ("4_3", "5_3"),
+            ("4_4", "5_4"),
+            ("4_5", "5_5"),
+            ("4_6", "5_6"),
+            ("4_7", "5_7"),
+            ("6_0", "7_0"),
+            ("6_1", "7_1"),
+            ("6_2", "7_2"),
+            ("6_3", "7_3"),
+            ("6_4", "7_4"),
+            ("6_5", "7_5"),
+            ("6_6", "7_6"),
+            ("7_1", "8_0"),
+            ("7_1", "8_1"),
+            ("7_4", "8_2"),
+            ("7_4", "8_3"),
+            ("8_0", "9_0"),
+            ("8_1", "9_1"),
+            ("8_2", "9_2"),
+            ("8_3", "9_3"),
+        ];
 
+        for &(from, to) in &edges {
+            let from_idx = nodes.get(from).expect("Missing node");
+            let to_idx = nodes.get(to).expect("Missing node");
+            graph.add_edge(*from_idx, *to_idx, "");
+        }
         graph
     }
 }

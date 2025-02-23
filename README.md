@@ -24,7 +24,7 @@
      ```     
      python3 -m http.server
      ```
-The Web version can be accessed:
+The browser version here:
 http://localhost:8000
 
 Or here:
