@@ -1,22 +1,17 @@
-use win_graph::WinGraph;
+use crate::win_graph;
 use log::trace;
-use petgraph::csr::IndexType;
-use petgraph::graph::Neighbors;
 use petgraph::prelude::NodeIndex;
 use petgraph::visit::Bfs;
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use slint::{Brush, Color, Model, SharedString, VecModel};
 use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
 use std::rc::Rc;
 
-use crate::win_graph;
+slint::include_modules!();
 
 const HUMAN_WIN_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(0, 140, 0));
 const MACHINE_WIN_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(140, 0, 0));
-
-slint::include_modules!();
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum Player {
@@ -44,456 +39,201 @@ impl Tile {
     }
 }
 
-pub struct GameLogic {}
+pub struct GameLogic;
+
+// A constant list of winning tile combinations.
+const WIN_COMBINATIONS: [[i32; 3]; 8] = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+];
 
 impl GameLogic {
+    /// Computes the next step for the machine.
     pub fn search_next_step(
         tiles_model: &Rc<VecModel<TileData>>,
         sequence_model: &Rc<VecModel<Sequence>>,
     ) -> Vec<Tile> {
-        trace!(
-            "Size of sequence_model: {:?}",
-            sequence_model.iter().count()
-        );
-        let mut actual_state: Vec<Tile> = Self::build_steps_from_model(&sequence_model);
-        let steps_map: HashMap<&str, Vec<Tile>> = WinGraph::init_steps_map();
-        let graph = WinGraph::build_graph();
+        trace!("Sequence model size: {:?}", sequence_model.iter().count());
+
+        let mut actual_state = Self::build_steps_from_model(sequence_model);
+        let steps_map: HashMap<&str, Vec<Tile>> = win_graph::WinGraph::init_steps_map();
+        let graph = win_graph::WinGraph::build_graph();
         let mut founded_key: Option<&str> = None;
         let mut next_state: Option<&str> = None;
         let mut rng: ThreadRng = rand::thread_rng();
 
-        for entry in steps_map.clone() {
-            if Self::vec_tile_compare(&entry.1, &actual_state) {
-                founded_key = Some(entry.0);
-                trace!("Founded {:?}", founded_key);
+        // Identify the current state in the steps map.
+        for (key, tiles) in &steps_map {
+            if Self::tiles_equal_unordered(tiles, &actual_state) {
+                founded_key = Some(*key);
+                trace!("Found key: {:?}", founded_key);
                 break;
             }
         }
 
-        for start in graph.node_indices() {
-            let mut bfs = Bfs::new(&graph, start);
-
-            while let Some(nx) = bfs.next(&graph) {
-                match founded_key {
-                    Some(key) => {
-                        if graph[nx].eq(key) {
-                            let neighbours: Neighbors<'_, &str> = graph.neighbors(nx);
-
-                            let count: usize = neighbours.clone().count();
-                            trace!("Count: {}", count);
-                            let mut neighbour_index: usize = 0;
-                            if count >= 1 {
-                                neighbour_index = rng.gen_range(0..count + 1);
-                            }
-                            trace!("Random neighbour_index: {:?}", neighbour_index);
-
-                            neighbours.for_each(|nb_node_index: NodeIndex| {
-                                trace!("next_node_index: {:?}", neighbour_index.index());
-                                next_state = Some(graph[nb_node_index]);
-                            });
-                            break;
+        // Use BFS on the graph to find a next state.
+        if let Some(key) = founded_key {
+            'outer: for start in graph.node_indices() {
+                let mut bfs = Bfs::new(&graph, start);
+                while let Some(nx) = bfs.next(&graph) {
+                    if graph[nx] == key {
+                        let neighbors: Vec<NodeIndex> = graph.neighbors(nx).collect();
+                        let count = neighbors.len();
+                        trace!("Found {} neighbor(s) for key {:?}", count, key);
+                        if count > 0 {
+                            let random_index = rng.gen_range(0..count);
+                            next_state = Some(graph[neighbors[random_index]]);
                         }
+                        break 'outer;
                     }
-                    None => (),
                 }
             }
         }
 
-        match next_state {
-            Some(key) => {
-                trace!("Next state key: {:?}", key);
-                let hash_map = steps_map.clone();
-                let result = &hash_map.get(key);
-                return result.unwrap().to_owned();
-            }
-            None => {
-                trace!("State not found, machine will random step");
-                let empty_tile_ids = tiles_model
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, tile)| {
-                        tile.empty == true
-                            && tile.machine_clicked == false
-                            && tile.human_clicked == false
-                    })
-                    .map(|(_, tile_data)| tile_data.id)
-                    .collect::<Vec<i32>>();
-                trace!("empty_tile_ids: {:?}", empty_tile_ids);
-
-                if empty_tile_ids.is_empty() {
-                    return Vec::new();
-                }
-                let rnd_tile_idx = rng.gen_range(0..empty_tile_ids.len());
-                let rnd_tile_id = empty_tile_ids.get(rnd_tile_idx).unwrap();
-                trace!("rnd_tile_id: {:?}", rnd_tile_id);
-
-                actual_state.push(Tile::new(*rnd_tile_id, Player::Machine));
-
-                for entry in steps_map.clone() {
-                    if Self::vec_tile_compare(&entry.1, &actual_state) {
-                        trace!("Founded next step {:?}", &entry.0);
-                        return steps_map.get(&entry.0).unwrap().to_vec();
-                    }
-                }
-                actual_state
+        // Return the next state's tile configuration if available.
+        if let Some(key) = next_state {
+            trace!("Next state key: {:?}", key);
+            if let Some(result) = steps_map.get(key) {
+                return result.to_owned();
             }
         }
+
+        // Fallback: perform a random move.
+        trace!("State not found, machine will perform a random step");
+        let empty_tile_ids: Vec<i32> = tiles_model
+            .iter()
+            .filter(|tile| tile.empty && !tile.machine_clicked && !tile.human_clicked)
+            .map(|tile_data| tile_data.id)
+            .collect();
+        trace!("Empty tile IDs: {:?}", empty_tile_ids);
+
+        if empty_tile_ids.is_empty() {
+            return Vec::new();
+        }
+        let rnd_tile_id = empty_tile_ids[rng.gen_range(0..empty_tile_ids.len())];
+        trace!("Randomly selected tile ID: {:?}", rnd_tile_id);
+
+        actual_state.push(Tile::new(rnd_tile_id, Player::Machine));
+
+        // Try to match the updated state with a valid next step.
+        for (key, tiles) in &steps_map {
+            if Self::tiles_equal_unordered(tiles, &actual_state) {
+                trace!("Found next step with key {:?}", key);
+                return tiles.to_vec();
+            }
+        }
+
+        actual_state
     }
 
+    /// Builds the list of played tiles from the sequence model.
     fn build_steps_from_model(sequence_model: &Rc<VecModel<Sequence>>) -> Vec<Tile> {
-        let mut steps: Vec<Tile> = Vec::new();
-
-        for (_i, sequence_data) in sequence_model.iter().enumerate() {
-            if sequence_data.player == "H" {
-                steps.push(Tile::new(sequence_data.id, Player::Human));
-            } else if sequence_data.player == "M" {
-                steps.push(Tile::new(sequence_data.id, Player::Machine));
-            }
-        }
-        trace!("build_steps_from_model steps: {:?}", &steps);
+        let steps: Vec<Tile> = sequence_model
+            .iter()
+            .filter_map(|sequence_data| match sequence_data.player.as_str() {
+                "H" => Some(Tile::new(sequence_data.id, Player::Human)),
+                "M" => Some(Tile::new(sequence_data.id, Player::Machine)),
+                _ => None,
+            })
+            .collect();
+        trace!("Built steps from model: {:?}", steps);
         steps
     }
 
-    fn vec_tile_compare(vector_a: &Vec<Tile>, vector_b: &Vec<Tile>) -> bool {
-        if vector_a.len() == vector_b.len() {
-            let a_set: HashSet<_> = vector_a.iter().copied().collect();
-            return vector_b.iter().all(|item| a_set.contains(item));
-        }
-        false
+    /// Compares two tile vectors regardless of order.
+    fn tiles_equal_unordered(a: &[Tile], b: &[Tile]) -> bool {
+        a.len() == b.len()
+            && a.iter().copied().collect::<HashSet<_>>()
+                == b.iter().copied().collect::<HashSet<_>>()
     }
 
+    /// Returns the winning combination for a given player, if any.
     pub fn get_win_combos(tiles_model: &Rc<VecModel<TileData>>, player: Player) -> Vec<i32> {
-        let mut counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 0 && tile.machine_clicked == true)
-                            || (tile.id == 1 && tile.machine_clicked == true)
-                            || (tile.id == 2 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
+        // Helper closure to check if a tile is claimed by the given player.
+        let is_claimed_by = |tile: &TileData| {
+            !tile.empty
+                && match player {
+                    Player::Machine => tile.machine_clicked,
+                    Player::Human => tile.human_clicked,
+                    Player::Nobody => false,
                 }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 0 && tile.human_clicked == true)
-                            || (tile.id == 1 && tile.human_clicked == true)
-                            || (tile.id == 2 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
+        };
 
-        if counter == 3 {
-            return vec![0, 1, 2];
+        for combo in WIN_COMBINATIONS.iter() {
+            // Check that every tile in the combo is claimed by the player.
+            if combo.iter().all(|&id| {
+                tiles_model
+                    .iter()
+                    .any(|tile| tile.id == id && is_claimed_by(&tile))
+            }) {
+                return combo.to_vec();
+            }
         }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 3 && tile.machine_clicked == true)
-                            || (tile.id == 4 && tile.machine_clicked == true)
-                            || (tile.id == 5 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 3 && tile.human_clicked == true)
-                            || (tile.id == 4 && tile.human_clicked == true)
-                            || (tile.id == 5 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![3, 4, 5];
-        }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 6 && tile.machine_clicked == true)
-                            || (tile.id == 7 && tile.machine_clicked == true)
-                            || (tile.id == 8 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 6 && tile.human_clicked == true)
-                            || (tile.id == 7 && tile.human_clicked == true)
-                            || (tile.id == 8 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![6, 7, 8];
-        }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 0 && tile.machine_clicked == true)
-                            || (tile.id == 3 && tile.machine_clicked == true)
-                            || (tile.id == 6 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 0 && tile.human_clicked == true)
-                            || (tile.id == 3 && tile.human_clicked == true)
-                            || (tile.id == 6 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![0, 3, 6];
-        }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 1 && tile.machine_clicked == true)
-                            || (tile.id == 4 && tile.machine_clicked == true)
-                            || (tile.id == 7 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 1 && tile.human_clicked == true)
-                            || (tile.id == 4 && tile.human_clicked == true)
-                            || (tile.id == 7 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![1, 4, 7];
-        }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 2 && tile.machine_clicked == true)
-                            || (tile.id == 5 && tile.machine_clicked == true)
-                            || (tile.id == 8 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 2 && tile.human_clicked == true)
-                            || (tile.id == 5 && tile.human_clicked == true)
-                            || (tile.id == 8 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![2, 5, 8];
-        }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 0 && tile.machine_clicked == true)
-                            || (tile.id == 4 && tile.machine_clicked == true)
-                            || (tile.id == 8 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 0 && tile.human_clicked == true)
-                            || (tile.id == 4 && tile.human_clicked == true)
-                            || (tile.id == 8 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![0, 4, 8];
-        }
-
-        counter = tiles_model
-            .iter()
-            .filter(|tile| match player {
-                Player::Machine => {
-                    if tile.empty == false
-                        && ((tile.id == 2 && tile.machine_clicked == true)
-                            || (tile.id == 4 && tile.machine_clicked == true)
-                            || (tile.id == 6 && tile.machine_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Human => {
-                    if tile.empty == false
-                        && ((tile.id == 2 && tile.human_clicked == true)
-                            || (tile.id == 4 && tile.human_clicked == true)
-                            || (tile.id == 6 && tile.human_clicked == true))
-                    {
-                        return true;
-                    }
-                    false
-                }
-                Player::Nobody => false,
-            })
-            .count();
-
-        if counter == 3 {
-            return vec![2, 4, 6];
-        }
-
         Vec::new()
     }
 
+    /// Checks if there is a winner, and updates the win color accordingly.
     pub fn has_winner(tiles_model: &Rc<VecModel<TileData>>) -> bool {
-        let win_combo = Self::get_win_combos(&tiles_model, Player::Machine);
-        if !win_combo.is_empty() {
-            tiles_model
-                .iter()
-                .enumerate()
-                .for_each(|(_i, mut tile_data)| {
-                    if win_combo.contains(&tile_data.id)
-                        && tile_data.machine_clicked == true
-                        && tile_data.empty == false
-                    {
-                        tile_data.win_color = MACHINE_WIN_COLOR;
-                        tiles_model.set_row_data(_i, tile_data);
-                    }
-                });
-            return true;
-        } else {
-            let win_combo = Self::get_win_combos(&tiles_model, Player::Human);
+        for (player, win_color) in &[
+            (Player::Machine, MACHINE_WIN_COLOR),
+            (Player::Human, HUMAN_WIN_COLOR),
+        ] {
+            let win_combo = Self::get_win_combos(tiles_model, *player);
             if !win_combo.is_empty() {
-                tiles_model
-                    .iter()
-                    .enumerate()
-                    .for_each(|(_i, mut tile_data)| {
-                        if win_combo.contains(&tile_data.id)
-                            && tile_data.human_clicked == true
-                            && tile_data.empty == false
-                        {
-                            tile_data.win_color = HUMAN_WIN_COLOR;
-                            tiles_model.set_row_data(_i, tile_data);
-                        }
-                    });
+                for (i, mut tile_data) in tiles_model.iter().enumerate() {
+                    if win_combo.contains(&tile_data.id)
+                        && !tile_data.empty
+                        && ((matches!(player, Player::Machine) && tile_data.machine_clicked)
+                            || (matches!(player, Player::Human) && tile_data.human_clicked))
+                    {
+                        tile_data.win_color = win_color.clone();
+                        tiles_model.set_row_data(i, tile_data);
+                    }
+                }
                 return true;
             }
         }
         false
     }
 
+    /// Starts the game by having the machine make the first move.
     pub fn random_machine_start(
         tiles_model: &Rc<VecModel<TileData>>,
         sequence_model: &Rc<VecModel<Sequence>>,
     ) {
-        for (_i, _sequence_data) in sequence_model.iter().enumerate() {
-            sequence_model.remove(_i);
+        // Clear the sequence model (removing items in reverse order to avoid shifting issues).
+        for i in (0..sequence_model.iter().count()).rev() {
+            sequence_model.remove(i);
         }
 
-        // Where does Machine start the game? Middle or top LHS ?
         let mut rng = rand::thread_rng();
-        let middle_or_top_right = rng.gen_range(0..2);
-        if middle_or_top_right == 1 {
-            for (_i, mut tile_data) in tiles_model.iter().enumerate() {
-                if tile_data.id == 4 {
-                    tile_data.machine_clicked = true;
-                    tile_data.empty = false;
-                    tiles_model.set_row_data(_i, tile_data);
-                    break;
-                }
-            }
-            sequence_model.insert(
-                0,
-                Sequence {
-                    id: 4,
-                    player: SharedString::from("M"),
-                },
-            )
-        } else {
-            for (_i, mut tile_data) in tiles_model.iter().enumerate() {
-                if tile_data.id == 0 {
-                    tile_data.machine_clicked = true;
-                    tile_data.empty = false;
-                    tiles_model.set_row_data(_i, tile_data);
-                    break;
-                }
-            }
-            sequence_model.insert(
-                0,
-                Sequence {
-                    id: 0,
-                    player: SharedString::from("M"),
-                },
-            )
+        // Decide whether to start in the center (tile id 4) or top-left (tile id 0).
+        let start_tile_id = if rng.gen_range(0..2) == 1 { 4 } else { 0 };
+
+        // Update the chosen tile in the tiles model.
+        if let Some((i, mut tile_data)) = tiles_model
+            .iter()
+            .enumerate()
+            .find(|(_, tile)| tile.id == start_tile_id)
+        {
+            tile_data.machine_clicked = true;
+            tile_data.empty = false;
+            tiles_model.set_row_data(i, tile_data);
         }
+
+        // Insert the starting move into the sequence model.
+        sequence_model.insert(
+            0,
+            Sequence {
+                id: start_tile_id,
+                player: SharedString::from("M"),
+            },
+        );
     }
 }
