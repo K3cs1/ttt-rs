@@ -14,10 +14,10 @@ log = "0.4.22"
 petgraph = "0.6.5"
 petgraph-evcxr = "0.2.0"
 rand = "0.8.5"
-slint = "1.8.0"
+slint = "1.9.2"
 
 [build-dependencies]
-slint-build = "1.8.0"
+slint-build = "1.9.2"
 
 [lib]
 path = "src/main.rs"
