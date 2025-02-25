@@ -29,14 +29,14 @@ pub struct Tile {
 }
 
 impl Tile {
-/* 
-    pub fn init() -> Self {
-        Self {
-            field_id: -1,
-            player: Player::Nobody,
+    /*
+        pub fn init() -> Self {
+            Self {
+                field_id: -1,
+                player: Player::Nobody,
+            }
         }
-    }
-*/
+    */
     pub fn new(field_id: i32, player: Player) -> Self {
         Self { field_id, player }
     }
@@ -55,7 +55,6 @@ const WIN_COMBINATIONS: [[i32; 3]; 8] = [
 ];
 
 /// --------- BRIDGING TYPES TO/FROM `win_graph.rs` ---------
-
 use win_graph::Player as WinPlayer;
 use win_graph::Tile as WinTile;
 
@@ -152,7 +151,7 @@ impl GameLogic {
 
         let mut founded_key: Option<String> = None;
         let mut next_state: Option<String> = None;
-        let mut rng: ThreadRng = rand::thread_rng();
+        let mut rng: ThreadRng = rand::rng();
 
         // 3) Identify which key in the map corresponds to our "actual_state_win."
         //    We'll do an unordered comparison: if steps_map[key] == actual_state_win, we found it.
@@ -171,9 +170,13 @@ impl GameLogic {
                 while let Some(nx) = bfs.next(&graph) {
                     if graph[nx] == *current_key {
                         let neighbors: Vec<NodeIndex> = graph.neighbors(nx).collect();
-                        trace!("Found {} neighbor(s) for key {}", neighbors.len(), current_key);
+                        trace!(
+                            "Found {} neighbor(s) for key {}",
+                            neighbors.len(),
+                            current_key
+                        );
                         if !neighbors.is_empty() {
-                            let random_index = rng.gen_range(0..neighbors.len());
+                            let random_index = rng.random_range(0..neighbors.len());
                             // This is the *next* state's string key
                             next_state = Some(graph[neighbors[random_index]].clone());
                         }
@@ -206,12 +209,15 @@ impl GameLogic {
             return from_win_tiles(&actual_state_win);
         }
 
-        let rnd_tile_id = empty_tile_ids[rng.gen_range(0..empty_tile_ids.len())];
+        let rnd_tile_id = empty_tile_ids[rng.random_range(0..empty_tile_ids.len())];
         trace!("Machine picks random tile {}", rnd_tile_id);
 
         // Add that random move to our *win_graph* style state:
         // (We convert "Machine" -> WinPlayer::Machine, i32->usize)
-        actual_state_win.push(win_graph::Tile::new(rnd_tile_id as usize, WinPlayer::Machine));
+        actual_state_win.push(win_graph::Tile::new(
+            rnd_tile_id as usize,
+            WinPlayer::Machine,
+        ));
 
         // Try to see if that updated "actual_state_win" matches a known key in steps_map
         for (key, tiles) in &steps_map {
@@ -240,7 +246,9 @@ impl GameLogic {
 
         for combo in WIN_COMBINATIONS {
             if combo.iter().all(|&id| {
-                tiles_model.iter().any(|tile_data| tile_data.id == id && is_claimed_by(&tile_data))
+                tiles_model
+                    .iter()
+                    .any(|tile_data| tile_data.id == id && is_claimed_by(&tile_data))
             }) {
                 return combo.to_vec();
             }
@@ -283,12 +291,14 @@ impl GameLogic {
         }
 
         // Choose center or top-left corner
-        let mut rng = rand::thread_rng();
-        let first_move = if rng.gen_range(0..2) == 1 { 4 } else { 0 };
+        let mut rng = rand::rng();
+        let first_move = if rng.random_range(0..2) == 1 { 4 } else { 0 };
 
         // Mark tile in the UI
-        if let Some((idx, mut tile_data)) =
-            tiles_model.iter().enumerate().find(|(_, t)| t.id == first_move)
+        if let Some((idx, mut tile_data)) = tiles_model
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.id == first_move)
         {
             tile_data.machine_clicked = true;
             tile_data.empty = false;

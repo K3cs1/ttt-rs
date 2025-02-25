@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 const DEFAULT_COLOR: Brush = Brush::SolidColor(Color::from_rgb_u8(255, 255, 0));
 
-//#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen(start))]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen(start))]
 fn main() {
     // So any panic prints a backtrace in the JS console (when using wasm).
     panic::set_hook(Box::new(console_error_panic_hook::hook));
