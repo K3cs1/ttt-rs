@@ -8,13 +8,14 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-console_error_panic_hook = "0.1.7"
-env_logger = "0.11.5"
-log = "0.4.22"
-petgraph = "0.6.5"
+cmake = "0.1.54"
+env_logger = "0.11.6"
+log = "0.4.26"
+petgraph = "0.7.1"
 petgraph-evcxr = "0.2.0"
-rand = "0.8.5"
+rand = "0.9.0"
 slint = "1.9.2"
+getrandom = { version = "0.3.1", features = ["wasm_js"] }
 
 [build-dependencies]
 slint-build = "1.9.2"
@@ -23,8 +24,12 @@ slint-build = "1.9.2"
 path = "src/main.rs"
 crate-type = ["cdylib"]
 
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2.99" }
-web-sys = { version = "0.3.76", features=["console"] }
+wasm-bindgen = { version = "0.2.100"}
+web-sys = { version = "0.3.77", features=["console"] }
 console_error_panic_hook = "0.1.7"
-getrandom = { version = "0.2.15", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
