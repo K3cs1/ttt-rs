@@ -482,88 +482,7 @@ impl WinGraph {
                     Tile::new(7, Player::Human),
                     Tile::new(1, Player::Machine),
                 ],
-            ),
-            // Additional winning sequences for the Machine (alternating moves)
-            (
-                "win_row_0",
-                &[
-                    Tile::new(0, Player::Machine),
-                    Tile::new(3, Player::Human), // filler move (non-blocking)
-                    Tile::new(1, Player::Machine),
-                    Tile::new(4, Player::Human), // filler move (non-blocking)
-                    Tile::new(2, Player::Machine),
-                ],
-            ),
-            (
-                "win_row_1",
-                &[
-                    Tile::new(3, Player::Machine),
-                    Tile::new(0, Player::Human),
-                    Tile::new(4, Player::Machine),
-                    Tile::new(1, Player::Human),
-                    Tile::new(5, Player::Machine),
-                ],
-            ),
-            (
-                "win_row_2",
-                &[
-                    Tile::new(6, Player::Machine),
-                    Tile::new(0, Player::Human),
-                    Tile::new(7, Player::Machine),
-                    Tile::new(1, Player::Human),
-                    Tile::new(8, Player::Machine),
-                ],
-            ),
-            (
-                "win_col_0",
-                &[
-                    Tile::new(0, Player::Machine),
-                    Tile::new(1, Player::Human),
-                    Tile::new(3, Player::Machine),
-                    Tile::new(2, Player::Human),
-                    Tile::new(6, Player::Machine),
-                ],
-            ),
-            (
-                "win_col_1",
-                &[
-                    Tile::new(1, Player::Machine),
-                    Tile::new(0, Player::Human),
-                    Tile::new(4, Player::Machine),
-                    Tile::new(2, Player::Human),
-                    Tile::new(7, Player::Machine),
-                ],
-            ),
-            (
-                "win_col_2",
-                &[
-                    Tile::new(2, Player::Machine),
-                    Tile::new(0, Player::Human),
-                    Tile::new(5, Player::Machine),
-                    Tile::new(1, Player::Human),
-                    Tile::new(8, Player::Machine),
-                ],
-            ),
-            (
-                "win_diag_0",
-                &[
-                    Tile::new(0, Player::Machine),
-                    Tile::new(1, Player::Human),
-                    Tile::new(4, Player::Machine),
-                    Tile::new(2, Player::Human),
-                    Tile::new(8, Player::Machine),
-                ],
-            ),
-            (
-                "win_diag_1",
-                &[
-                    Tile::new(2, Player::Machine),
-                    Tile::new(0, Player::Human),
-                    Tile::new(4, Player::Machine),
-                    Tile::new(1, Player::Human),
-                    Tile::new(6, Player::Machine),
-                ],
-            ),
+            )
         ];
 
         let mut steps_map = HashMap::new();
@@ -624,15 +543,7 @@ impl WinGraph {
             "9_0",
             "9_1",
             "9_2",
-            "9_3",
-            "win_row_0",
-            "win_row_1",
-            "win_row_2",
-            "win_col_0",
-            "win_col_1",
-            "win_col_2",
-            "win_diag_0",
-            "win_diag_1",
+            "9_3"
         ];
         let mut graph = Graph::<&'static str, &'static str>::new();
         // Build a map from key to node index.
@@ -680,15 +591,7 @@ impl WinGraph {
             ("8_0", "9_0"),
             ("8_1", "9_1"),
             ("8_2", "9_2"),
-            ("8_3", "9_3"),
-            ("5_0", "win_row_0"),
-            ("5_1", "win_row_1"),
-            ("5_2", "win_row_2"),
-            ("5_3", "win_col_0"),
-            ("5_4", "win_col_1"),
-            ("5_5", "win_col_2"),
-            ("5_6", "win_diag_0"),
-            ("5_7", "win_diag_1"),
+            ("8_3", "9_3")
         ];
 
         for &(from, to) in &edges {
