@@ -6,8 +6,6 @@ pub struct WinGraph {}
 
 impl WinGraph {
     pub fn init_steps_map() -> HashMap<&'static str, Vec<Tile>> {
-        // Define a static slice of key and tile-array pairs.
-        // (Note: duplicate keys have been removed.)
         let entries: &[(&'static str, &[Tile])] = &[
             ("0_0", &[Tile::init()]),
             ("1_0", &[Tile::new(4, Player::Machine)]),
@@ -485,6 +483,87 @@ impl WinGraph {
                     Tile::new(1, Player::Machine),
                 ],
             ),
+            // Additional winning sequences for the Machine (alternating moves)
+            (
+                "win_row_0",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(3, Player::Human), // filler move (non-blocking)
+                    Tile::new(1, Player::Machine),
+                    Tile::new(4, Player::Human), // filler move (non-blocking)
+                    Tile::new(2, Player::Machine),
+                ],
+            ),
+            (
+                "win_row_1",
+                &[
+                    Tile::new(3, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(5, Player::Machine),
+                ],
+            ),
+            (
+                "win_row_2",
+                &[
+                    Tile::new(6, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(7, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(8, Player::Machine),
+                ],
+            ),
+            (
+                "win_col_0",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(3, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(6, Player::Machine),
+                ],
+            ),
+            (
+                "win_col_1",
+                &[
+                    Tile::new(1, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(4, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(7, Player::Machine),
+                ],
+            ),
+            (
+                "win_col_2",
+                &[
+                    Tile::new(2, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(5, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(8, Player::Machine),
+                ],
+            ),
+            (
+                "win_diag_0",
+                &[
+                    Tile::new(0, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(4, Player::Machine),
+                    Tile::new(2, Player::Human),
+                    Tile::new(8, Player::Machine),
+                ],
+            ),
+            (
+                "win_diag_1",
+                &[
+                    Tile::new(2, Player::Machine),
+                    Tile::new(0, Player::Human),
+                    Tile::new(4, Player::Machine),
+                    Tile::new(1, Player::Human),
+                    Tile::new(6, Player::Machine),
+                ],
+            ),
         ];
 
         let mut steps_map = HashMap::new();
@@ -496,11 +575,64 @@ impl WinGraph {
 
     pub fn build_graph() -> Graph<&'static str, &'static str> {
         let keys = [
-            "0_0", "1_0", "1_1", "2_0", "2_1", "2_2", "2_3", "2_4", "3_0", "3_1", "3_2", "3_3",
-            "4_0", "4_1", "4_2", "4_3", "4_4", "4_5", "4_6", "4_7", "5_0", "5_1", "5_2", "5_3",
-            "5_4", "5_5", "5_6", "5_7", "6_0", "6_1", "6_2", "6_3", "6_4", "6_5", "6_6", "7_0",
-            "7_1", "7_2", "7_3", "7_4", "7_5", "7_6", "8_0", "8_1", "8_2", "8_3", "9_0", "9_1",
-            "9_2", "9_3",
+            "0_0",
+            "1_0",
+            "1_1",
+            "2_0",
+            "2_1",
+            "2_2",
+            "2_3",
+            "2_4",
+            "3_0",
+            "3_1",
+            "3_2",
+            "3_3",
+            "4_0",
+            "4_1",
+            "4_2",
+            "4_3",
+            "4_4",
+            "4_5",
+            "4_6",
+            "4_7",
+            "5_0",
+            "5_1",
+            "5_2",
+            "5_3",
+            "5_4",
+            "5_5",
+            "5_6",
+            "5_7",
+            "6_0",
+            "6_1",
+            "6_2",
+            "6_3",
+            "6_4",
+            "6_5",
+            "6_6",
+            "7_0",
+            "7_1",
+            "7_2",
+            "7_3",
+            "7_4",
+            "7_5",
+            "7_6",
+            "8_0",
+            "8_1",
+            "8_2",
+            "8_3",
+            "9_0",
+            "9_1",
+            "9_2",
+            "9_3",
+            "win_row_0",
+            "win_row_1",
+            "win_row_2",
+            "win_col_0",
+            "win_col_1",
+            "win_col_2",
+            "win_diag_0",
+            "win_diag_1",
         ];
         let mut graph = Graph::<&'static str, &'static str>::new();
         // Build a map from key to node index.
@@ -549,6 +681,14 @@ impl WinGraph {
             ("8_1", "9_1"),
             ("8_2", "9_2"),
             ("8_3", "9_3"),
+            ("5_0", "win_row_0"),
+            ("5_1", "win_row_1"),
+            ("5_2", "win_row_2"),
+            ("5_3", "win_col_0"),
+            ("5_4", "win_col_1"),
+            ("5_5", "win_col_2"),
+            ("5_6", "win_diag_0"),
+            ("5_7", "win_diag_1"),
         ];
 
         for &(from, to) in &edges {
